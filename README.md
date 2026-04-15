@@ -12,5 +12,5 @@ Shinhan University SW SeoulHexagram AI Food Ordering System
 소프트웨어공학과	3	남	20242044	이문한	비정규	010-6443-3264
 
 <br>
-![description](pageDescription.png )<br>
+![description](pageDescription.png)<br>
 <br>
