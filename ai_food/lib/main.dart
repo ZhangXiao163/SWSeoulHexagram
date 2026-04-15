@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'splash_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,6 +31,9 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: .fromSeed(seedColor: Colors.deepPurple),
       ),
+        // home: SplashPage(), // 👈 先进入开屏页
+        // routes: {
+        //   '/home': (context) => MyHomePage(title: 'Flutter Demo Home Page'),}
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
