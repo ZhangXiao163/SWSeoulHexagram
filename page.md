@@ -1,4 +1,18 @@
-首页（AI入口）
+- 1. splash 启动页 finish
+- 2. 首页（Main Page）（AI入口） 显示商家列表 分类  
+- 3. 菜单页(Menu page) 显示商家菜单列表    
+- 4. 商品详情页（Detail Page）：看一个菜的详细信息 这页会有AI评论总结（挂在详情页）3
+- 5.  购物车页面（Cart）
+- 6.  结算页面（Order Confirm）  
+- 7.  订单完成页（Order Complete）  结算页跟完成页 由于不需要真正结算 只是展示一下 比较简单  一位同学开发
+- 8.  AI推荐输入页（AI Input）   这里会接入ai引擎 我来做  
+- 9.  AI推荐结果页（AI Result）
+
+---
+![description](pageDescription.png)
+---
+
+
 AI推荐结果页 ⭐
 菜单列表页
 购物车
