@@ -1,35 +1,24 @@
-- 1. splash 启动页 finish
-- 2. 首页（Main Page）（AI入口） 显示商家列表 分类  
-- 3. 菜单页(Menu page) 显示商家菜单列表    
-- 4. 商品详情页（Detail Page）：看一个菜的详细信息 这页会有AI评论总结（挂在详情页）3
-- 5.  购物车页面（Cart）
-- 6.  结算页面（Order Confirm）  
-- 7.  订单完成页（Order Complete）  结算页跟完成页 由于不需要真正结算 只是展示一下 比较简单  一位同学开发
-- 8.  AI推荐输入页（AI Input）   这里会接入ai引擎 我来做  
-- 9.  AI推荐结果页（AI Result）
+- 1. splash   스플래시 시작 화면 종료      启动页 finish   장효(张孝)
+- 2. 首页（Main Page）메인 페이지 AI 진입  （AI入口） 显示商家列表 分类      이문한
+- 3. 菜单页(Menu page)메뉴 페이지  显示商家菜单列表      정흥일
+- 4. 商品详情页（Detail Page）상품 상세 페이지： 김가호<br>看一个菜的详细信息 这页会有AI评论总结（挂在详情页）
+- 5.  购物车页面（Cart）장바구니 페이지  왕추좡          
+- 6.  结算页面（Order Confirm）    주문 확인 페이지   양혁봉
+- 7.  订单完成页（Order Complete）주문 완료 페이지    양혁봉 <br>结算页跟完成页 由于不需要真正结算 只是展示一下 比较简单  
+- 8.  AI推荐输入页（AI Input） AI 추천 입력 페이지  这里会接入ai引擎   장효(张孝)
+- 9.  AI推荐结果页（AI Result）AI 추천 결과 페이지    장효(张孝)
 
 ---
 ![description](pageDescription.png)
 ---
-
-
-AI推荐结果页 ⭐
-菜单列表页
-购物车
-订单页
 <br>
-![description](pageDescription.png)
 <br>
 🟢 1. 启动页（Splash）
 
 👉 作用：App启动时的过渡页
-
 功能：
 
 显示Logo
-简单loading（1-2秒）
-
-👉 很简单，主要是“看起来像个完整App”
 
 🟡 2. 首页（Main Page）
 
