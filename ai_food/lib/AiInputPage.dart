@@ -59,6 +59,7 @@ class _AiInputPageState extends State<AiInputPage> {
       appBar: AppBar(
         title: Text("AI 추천"),
         centerTitle: true,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -116,7 +117,7 @@ class _AiInputPageState extends State<AiInputPage> {
             Wrap(
               spacing: 10,
               children: [
-                _exampleChip("매운 음식"),
+                _exampleChip("매운 한식"),
                 _exampleChip("다이어트 음식"),
                 _exampleChip("가성비 좋은 음식"),
               ],

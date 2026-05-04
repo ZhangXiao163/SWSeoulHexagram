@@ -10,15 +10,17 @@ class AiResultPage extends StatelessWidget {
 
     String food = "추천 음식";
     String reason = text;
-
+    String price="0";
     if (parts.length >= 2) {
       food = parts[0].replaceAll("추천:", "").trim();
       reason = parts[1].replaceAll("이유:", "").trim();
+      price = parts[2].trim();
     }
 
     return {
       "food": food,
       "reason": reason,
+      "price":price,
     };
   }
 
@@ -39,6 +41,7 @@ class AiResultPage extends StatelessWidget {
         title: Text("AI 추천 결과"),
         centerTitle: true,
         elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -147,7 +150,8 @@ class AiResultPage extends StatelessWidget {
                                       color: Colors.amber, size: 18),
                                   Text(" 4.5"),
                                   SizedBox(width: 10),
-                                  Text("₩ 9,000"),
+
+                                  Text("₩ ${parsed["price"]!}"),
                                 ],
                               ),
                             ],
