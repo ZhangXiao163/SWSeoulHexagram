@@ -13,7 +13,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'AI FOOD ',
+      debugShowCheckedModeBanner: false, // 👈 关闭 DEBUG 标识
       theme: ThemeData(
         // This is the theme of your application.
         //
