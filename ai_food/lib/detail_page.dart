@@ -67,7 +67,7 @@ class DetailPage extends StatelessWidget{
                   const SizedBox(height: 8),
 
                   const Text(
-                    '精选牛肉以传统酱汁腌制，搭配日本珍珠米饭，层次丰富。',
+                    '精选牛肉以传统酱汁腌制，搭配米饭，层次丰富。',
                     style: TextStyle(fontSize: 14, color: Colors.black54),
                   ),
                   const SizedBox(height: 24),
@@ -78,11 +78,11 @@ class DetailPage extends StatelessWidget{
                   ),
                   const SizedBox(height: 10),
                   const Item(
-                    name: '美食达人小王',
+                    name: '小王',
                     content: '肉质非常嫩，酱汁的甜咸比例恰到好处！',
                   ),
                   const Item(
-                    name: 'Foodie_Lisa',
+                    name: '小张',
                     content: '分量很足，性价比高，下次还会来。',
                   ),
                 ],
