@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
+import 'app_theme.dart';
 
 class CommonButton extends StatelessWidget {
   final String text;
@@ -70,7 +70,7 @@ class CommonButton extends StatelessWidget {
   }
 
   // 文字按钮
-  static Widget text({
+  static Widget text1({
     required String text,
     VoidCallback? onPressed,
     Color? color,
