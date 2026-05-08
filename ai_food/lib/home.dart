@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'AiInputPage.dart';
-import 'ai_search_page.dart';
+import 'ai/ai_search_page.dart';
 
 void main() => runApp(MaterialApp(home: TakeoutHomePage(), debugShowCheckedModeBanner: false));
-
+//Google Gemini API
 class TakeoutHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -288,7 +288,7 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                   children: [
                     const Icon(Icons.search, color: Colors.grey, size: 20),
                     const SizedBox(width: 8),
-                    const Text("想吃点什么？", style: TextStyle(color: Colors.grey)),
+                    const Text("想吃点什么？问问GeminiAi?", style: TextStyle(color: Colors.grey)),
                     const Spacer(),
                     // 清除图标点击事件
                     GestureDetector(
