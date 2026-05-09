@@ -2,6 +2,8 @@ import 'dart:convert'; // 用于解析 JSON
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'TrendItem.dart';
+import 'ai_talk.dart';
+import 'gemini_service.dart';
 import 'secrets.dart'; // 导入你之前创建的 secrets.dart
 import 'package:http/http.dart' as http;
 
@@ -26,10 +28,11 @@ class _AiTrendPageState extends State<AiTrendPage> {
     setState(() => _isLoading = true);
 
     // 1. 写死 URL，保证路径 100% 正确
-    final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${Secrets.geminiApiKey}'
-    );
-
+    // final url = Uri.parse(
+    //     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${Secrets.geminiApiKey}'
+    // );
+    final geminiService = GeminiService();
+    final url = Uri.parse(geminiService.getGeminiUrl());
     try {
       // 2. 发起请求，不使用插件类
       final response = await http.post(
@@ -190,7 +193,26 @@ class _TrendHeaderDelegate extends SliverPersistentHeaderDelegate {
                     children: [
                       const Expanded(child: Text("问问GeminiAi?", style: TextStyle(color: Colors.black87, fontSize: 14))),
                       GestureDetector(
-                        onTap: onSearch, // 点击搜索触发 AI 请求
+                        behavior: HitTestBehavior.opaque, // ← 加这行
+                        onTap:(){
+                          print("onTap");
+                          //
+                          // Navigator.push(
+                          //   context,
+                          //   PageRouteBuilder(
+                          //     pageBuilder: (context, animation, secondaryAnimation) => const AiFoodChatScreen(),
+                          //     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          //       return FadeTransition(
+                          //         opacity: animation,
+                          //         child: ScaleTransition(
+                          //           scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+                          //           child: child,
+                          //         ),
+                          //       );
+                          //     },
+                          //   ),
+                          // );
+                        }, // 点击搜索触发 AI 请求
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(color: const Color(0xFFFFD000), borderRadius: BorderRadius.circular(18)),

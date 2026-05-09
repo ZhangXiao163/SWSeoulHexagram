@@ -37,7 +37,7 @@ class _SplashPageState extends State<SplashPage> {
           duration: Duration(seconds: 1),
           opacity: opacity,
           child: Image.asset(
-            'assets/images/splash.png',
+            'assets/images/splash1.png',
             width: 200,
           ),
         ),

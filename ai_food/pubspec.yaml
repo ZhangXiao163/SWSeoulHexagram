@@ -30,9 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  flutter_localizations: # 移到这里，与 flutter 对齐
+    sdk: flutter
+  intl: ^0.20.2
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   google_generative_ai: ^0.4.7-dev
@@ -64,7 +64,7 @@ flutter:
 
 flutter_native_splash:
   color: "#ffffff"
-  image: assets/images/splash.png
+  image: assets/images/splash1.png
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
