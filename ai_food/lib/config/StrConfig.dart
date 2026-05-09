@@ -40,6 +40,7 @@ class StrConfig {
       'please_pwd': '请输入密码',
       'no_acc': '还没有账号？',
       'register_soon': '立即注册？',
+      'login_toss': '账号和密码不能为空',
     },
     'ko': {
       'search_hint': '음식을 검색하세요...',
@@ -75,6 +76,7 @@ class StrConfig {
       'please_pwd': '비밀번호를 입력하세요',
       'no_acc': '아직 계정이 없으신가요?',
       'register_soon': '지금 회원가입',
+      'login_toss': '계정과 비밀번호는 비워둘 수 없습니까',
     },
   };
 
@@ -119,6 +121,7 @@ class StrConfig {
   String get pleasePwd => _data[locale.languageCode]!['please_pwd']!;
 
   String get noAcc => _data[locale.languageCode]!['no_acc']!;
+  String get loginToss => _data[locale.languageCode]!['login_toss']!;
 
   String get registerSoon => _data[locale.languageCode]!['register_soon']!;
 

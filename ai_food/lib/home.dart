@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:ai_food/config/login_manager.dart';
 import 'package:ai_food/login.dart';
 import 'package:flutter/material.dart';
 
@@ -43,8 +44,14 @@ class MyApp extends StatelessWidget {
 }
 
 
-class TakeoutHomePage extends StatelessWidget {
+class TakeoutHomePage extends StatefulWidget {
   const TakeoutHomePage({super.key});
+
+  @override
+  State<TakeoutHomePage> createState() => _TakeoutHomePageState();
+}
+
+class _TakeoutHomePageState extends State<TakeoutHomePage> {
 
   @override
   Widget build(BuildContext context) {
@@ -64,11 +71,13 @@ class TakeoutHomePage extends StatelessWidget {
           ),
 
           // 2. 吸顶搜索框
+          // 2. 吸顶搜索框
           SliverPersistentHeader(
             pinned: true,
-            delegate: _StickySearchBarDelegate(),
+            delegate: _StickySearchBarDelegate(
+              onRefresh: () => setState(() {}),
+            ),
           ),
-
           // 3. 轮播图
           SliverToBoxAdapter(
             child: Container(
@@ -415,28 +424,26 @@ class _ImageBannerCarouselState extends State<ImageBannerCarousel> {
 // 吸顶搜索框
 // ─────────────────────────────────────────
 class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
+  final VoidCallback onRefresh; // 新增
 
-  // // 搜索点击处理
-  // void _onTouchSearch(BuildContext context) {
-  //   // 你的跳转逻辑
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text("正在打开搜索..."))
-  //   );
-  // }
+  _StickySearchBarDelegate({required this.onRefresh}); // 新增构造
 
   @override
-  Widget build(BuildContext context, double shrinkOffset,
-      bool overlapsContent) {
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: const Color(0xFFCDB7F6),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Row(
         children: [
           const SizedBox(width: 2),
-// --- 新增：登录按钮 (参考问问Gemini样式) ---
+
+          // 登录按钮
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
+              if(LoginManager.instance.isLogin){
+                return;
+              }
               _onTouchLogin(context);
               print("点击了登录按钮");
             },
@@ -450,195 +457,191 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-
-                Container(
-                width: 20,
-                height: 20,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                ),
-                child: ClipOval(
-                  child: Image.asset(
-                    "assets/images/tiger.png",
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                    const Icon(
-                      Icons.face,
-                      size: 18,
-                      color: Color(0xFF6D5AE6),
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        "assets/images/tiger.png",
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                        const Icon(
+                          Icons.face,
+                          size: 18,
+                          color: Color(0xFF6D5AE6),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
+                  const SizedBox(width: 4),
 
-              const SizedBox(width: 4),
-
-              Text(
-                  StrConfig
-                      .of(context)
-                      .login,
-                  style: const TextStyle(
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 48),
+                child:  Text(
+                LoginManager.instance.isLogin
+                    ? LoginManager.instance.getLoginName()
+                    : StrConfig.of(context).login,
+                style: const TextStyle(
                   color: Color(0xFF6D5AE6),
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis, // 超出显示...
+                // 或者用 TextOverflow.fade
+              ),),
+                ],
+              ),
             ),
           ),
+
+          const SizedBox(width: 5),
+
+          // 搜索框
+          Expanded(
+            child: Container(
+              height: 38,
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: const Color(0xFFFFD233),
+                  width: 2,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 6),
+                  const Icon(Icons.search, color: Colors.grey, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      StrConfig.of(context).searchHint,
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => _onTouchSearch(context),
+                    child: Container(
+                      height: 28,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFD400),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        StrConfig.of(context).searchBtn,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Gemini AI按钮
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              print("点击了 AI 按钮");
+              _onTouchSearch(context);
+            },
+            child: Container(
+              height: 38,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: const BoxDecoration(shape: BoxShape.circle),
+                    child: ClipOval(
+                      child: Image.asset(
+                        "assets/images/tiger.png",
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.face, size: 18, color: Colors.purple),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: StrConfig.of(context).askGemini,
+                          style: const TextStyle(
+                            color: Color(0xFF6D5AE6),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'NanumGothic',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // 语言切换按钮
+          GestureDetector(
+            onTap: () {
+              appLocale.value = appLocale.value.languageCode == 'zh'
+                  ? const Locale('ko')
+                  : const Locale('zh');
+            },
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                appLocale.value.languageCode == 'zh' ? "한" : "中",
+                style: const TextStyle(
+                  color: Color(0xFF6D5AE6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 3),
         ],
       ),
-    ),
-    ),
-    const SizedBox(width: 5),
-    // 1. 搜索框
-    Expanded(
-    child: Container(
-    height: 38,
-    padding: const EdgeInsets.symmetric(horizontal: 6),
-    decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(22),
-    border: Border.all(
-    color: const Color(0xFFFFD233),
-    width: 2,
-    ),
-    ),
-    child: Row(
-    children: [
-
-    const SizedBox(width: 6),
-    const Icon(Icons.search, color: Colors.grey, size: 18),
-    const SizedBox(width: 6),
-    Expanded(
-    child: Text(
-    StrConfig.of(context).searchHint, // 使用之前在 S 类中定义的 getter
-    style: const TextStyle(color: Colors.grey, fontSize: 13),
-    ),
-    ),
-    GestureDetector(
-    onTap: () => _onTouchSearch(context),
-    child: Container(
-    height: 28,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(
-    color: const Color(0xFFFFD400),
-    borderRadius: BorderRadius.circular(16),
-    ),
-    alignment: Alignment.center,
-    child: Text(
-    StrConfig.of(context).searchBtn,
-    style: TextStyle(
-    fontWeight: FontWeight.bold,
-    fontSize: 12,
-    color: Colors.black,
-    ),
-    ),
-    ),
-    ),
-    ],
-    ),
-    ),
-    ),
-
-    const SizedBox(width: 8),
-
-    // 2. Gemini AI按钮
-    GestureDetector(
-    // 关键 1: 确保点击区域覆盖整个 Container，即使是空白处
-    behavior: HitTestBehavior.opaque,
-    onTap: () {
-    print("点击了 AI 按钮"); // 调试用
-    _onTouchSearch(context);
-    },
-    child: Container(
-    height: 38,
-    padding: const EdgeInsets.symmetric(horizontal: 10),
-    decoration: BoxDecoration(
-    color: Colors.white.withOpacity(0.9),
-    borderRadius: BorderRadius.circular(22),
-    ),
-    child: Row(
-    mainAxisSize: MainAxisSize.min, // 确保 Row 只占用必要的宽度
-    children: [
-    Container(
-    width: 24,
-    height: 24,
-    decoration: const BoxDecoration(shape: BoxShape.circle),
-    child: ClipOval(
-    child: Image.asset(
-    "assets/images/tiger.png",
-    fit: BoxFit.cover,
-    errorBuilder: (context, error, stackTrace) =>
-    const Icon(Icons.face, size: 18, color: Colors.purple),
-    ),
-    ),
-    ),
-    const SizedBox(width: 6),
-    // 关键 2: 移除 RichText 外层可能的 const，确保 StrConfig 动态生效
-    RichText(
-    text: TextSpan(
-    children: [
-    TextSpan(
-    text: StrConfig.of(context).askGemini,
-    style: const TextStyle(
-    color: Color(0xFF6D5AE6),
-    fontSize: 12,
-    fontWeight: FontWeight.bold,
-    fontFamily: 'NanumGothic', // 如果你配置了韩文字体，可以在这里指定
-    ),
-    ),
-    ],
-    ),
-    ),
-    ],
-    ),
-    ),
-    ),
-    const SizedBox(width: 8),
-
-    // 3. 新增：语言切换按钮
-    // 在 Row 的最后添加这个按钮
-    GestureDetector(
-    onTap: () {
-    // 切换语言逻辑
-    // 切换逻辑：如果是 zh 就切到 ko，反之切回 zh
-    appLocale.value = appLocale.value.languageCode == 'zh'
-    ? const Locale('ko')
-        : const Locale('zh');
-    },
-    child: Container(
-    width: 38,
-    height: 38,
-    decoration: BoxDecoration(
-    color: Colors.white.withOpacity(0.9),
-    shape: BoxShape.circle,
-    ),
-    alignment: Alignment.center,
-    child: Text(
-    appLocale.value.languageCode == 'zh' ?   "한":"中",
-    style: const TextStyle(
-    color: Color(0xFF6D5AE6),
-    fontSize: 12,
-    fontWeight: FontWeight.bold,
-    ),
-    ),
-    ),
-    ),
-    const SizedBox(width: 3)
-    ,
-    ]
-    ,
-    )
-    ,
     );
   }
 
-  // ... 保持原有的 _onTouchSearch, maxExtent, minExtent, shouldRebuild 不变
   void _onTouchSearch(BuildContext context) {
-    // 原有逻辑
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation,
-            secondaryAnimation) => const AiFoodChatScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+        const AiFoodChatScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
@@ -656,8 +659,8 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation,
-            secondaryAnimation) => const LoginPage(),
+        pageBuilder: (context, animation, secondaryAnimation) =>
+        const LoginPage(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
@@ -668,7 +671,7 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
           );
         },
       ),
-    );
+    ).then((_) => onRefresh()); // 登录页返回后刷新
   }
 
   @override
@@ -678,5 +681,5 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => 58;
 
   @override
-  bool shouldRebuild(_StickySearchBarDelegate oldDelegate) => false;
+  bool shouldRebuild(_StickySearchBarDelegate oldDelegate) => true; // 改为true
 }

@@ -1,9 +1,46 @@
+import 'package:ai_food/config/login_manager.dart';
 import 'package:flutter/material.dart';
 
 import 'config/StrConfig.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController accountController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    accountController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  // 登录校验
+  void _onLoginPressed() {
+    final account = accountController.text.trim();
+    final password = passwordController.text.trim();
+
+    if (account.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(StrConfig.of(context).loginToss),
+          backgroundColor: const Color(0xFF6D5AE6),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    LoginManager.instance.login(account);
+    debugPrint("点击登录");
+    Navigator.pop(context);
+    // 继续后续登录逻辑
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +54,6 @@ class LoginPage extends StatelessWidget {
 
             child: Column(
               children: [
-
                 const SizedBox(height: 30),
 
                 // Tiger头像
@@ -46,9 +82,7 @@ class LoginPage extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 Text(
-                  StrConfig
-                      .of(context)
-                      .lgWelcome,
+                  StrConfig.of(context).lgWelcome,
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -58,53 +92,29 @@ class LoginPage extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                 Text(
-                  StrConfig
-                      .of(context)
-                      .lgWelAi,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                Text(
+                  StrConfig.of(context).lgWelAi,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
 
                 const SizedBox(height: 40),
 
-                // 手机号
+                // 账号输入框
                 _buildInputBox(
-                  hint:    StrConfig
-                      .of(context)
-                      .pleaseAcc,
+                  hint: StrConfig.of(context).pleaseAcc,
                   icon: Icons.account_box,
+                  controller: accountController,
                 ),
 
                 const SizedBox(height: 18),
 
-                // 密码
+                // 密码输入框
                 _buildInputBox(
-                  hint:    StrConfig
-                      .of(context)
-                      .pleasePwd,
+                  hint: StrConfig.of(context).pleasePwd,
                   icon: Icons.lock_outline,
+                  controller: passwordController,
                   obscureText: true,
                 ),
-
-                const SizedBox(height: 10),
-
-                // 忘记密码
-                // Align(
-                //   alignment: Alignment.centerRight,
-                //   child: TextButton(
-                //     onPressed: () {},
-                //     child: const Text(
-                //       "忘记密码？",
-                //       style: TextStyle(
-                //         color: Color(0xFF6D5AE6),
-                //         fontWeight: FontWeight.bold,
-                //       ),
-                //     ),
-                //   ),
-                // ),
 
                 const SizedBox(height: 15),
 
@@ -114,9 +124,7 @@ class LoginPage extends StatelessWidget {
                   height: 54,
 
                   child: ElevatedButton(
-                    onPressed: () {
-                      debugPrint("点击登录");
-                    },
+                    onPressed: _onLoginPressed,
 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6D5AE6),
@@ -127,11 +135,9 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
 
-                    child:  Text(
-                      StrConfig
-                          .of(context)
-                          .login,
-                      style: TextStyle(
+                    child: Text(
+                      StrConfig.of(context).login,
+                      style: const TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -145,25 +151,12 @@ class LoginPage extends StatelessWidget {
                 // 分割线
                 Row(
                   children: [
-
                     Expanded(
                       child: Container(
                         height: 1,
                         color: Colors.grey.withOpacity(0.2),
                       ),
                     ),
-
-                    // const Padding(
-                    //   padding: EdgeInsets.symmetric(horizontal: 12),
-                    //   child: Text(
-                    //     "其他登录方式",
-                    //     style: TextStyle(
-                    //       color: Colors.grey,
-                    //       fontSize: 12,
-                    //     ),
-                    //   ),
-                    // ),
-
                     Expanded(
                       child: Container(
                         height: 1,
@@ -175,30 +168,10 @@ class LoginPage extends StatelessWidget {
 
                 const SizedBox(height: 26),
 
-                // 第三方登录
-                Row(
+                // 第三方登录（预留位置）
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-
-                    // _buildSocialButton(
-                    //   icon: Icons.wechat,
-                    //   color: Colors.green,
-                    // ),
-
-                    const SizedBox(width: 20),
-
-                    // _buildSocialButton(
-                    //   icon: Icons.email,
-                    //   color: Colors.orange,
-                    // ),
-
-                    const SizedBox(width: 20),
-
-                    // _buildSocialButton(
-                    //   icon: Icons.g_mobiledata,
-                    //   color: Colors.red,
-                    // ),
-                  ],
+                  children: [SizedBox(width: 20), SizedBox(width: 20)],
                 ),
 
                 const SizedBox(height: 40),
@@ -207,24 +180,17 @@ class LoginPage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
-                     Text(
-                      StrConfig
-                          .of(context)
-                          .noAcc,
-                      style: TextStyle(
-                        color: Colors.grey,
-                      ),
+                    Text(
+                      StrConfig.of(context).noAcc,
+                      style: const TextStyle(color: Colors.grey),
                     ),
 
                     TextButton(
                       onPressed: () {},
 
-                      child:  Text(
-                        StrConfig
-                            .of(context)
-                            .registerSoon,
-                        style: TextStyle(
+                      child: Text(
+                        StrConfig.of(context).registerSoon,
+                        style: const TextStyle(
                           color: Color(0xFF6D5AE6),
                           fontWeight: FontWeight.bold,
                         ),
@@ -244,6 +210,7 @@ class LoginPage extends StatelessWidget {
   Widget _buildInputBox({
     required String hint,
     required IconData icon,
+    required TextEditingController controller,
     bool obscureText = false,
   }) {
     return Container(
@@ -263,6 +230,7 @@ class LoginPage extends StatelessWidget {
       ),
 
       child: TextField(
+        controller: controller,
         obscureText: obscureText,
 
         decoration: InputDecoration(
@@ -273,27 +241,18 @@ class LoginPage extends StatelessWidget {
             vertical: 18,
           ),
 
-          prefixIcon: Icon(
-            icon,
-            color: const Color(0xFF6D5AE6),
-          ),
+          prefixIcon: Icon(icon, color: const Color(0xFF6D5AE6)),
 
           hintText: hint,
 
-          hintStyle: const TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
-          ),
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
         ),
       ),
     );
   }
 
-  // 第三方登录按钮
-  Widget _buildSocialButton({
-    required IconData icon,
-    required Color color,
-  }) {
+  // 第三方登录按钮（备用）
+  Widget _buildSocialButton({required IconData icon, required Color color}) {
     return Container(
       width: 52,
       height: 52,
@@ -311,11 +270,7 @@ class LoginPage extends StatelessWidget {
         ],
       ),
 
-      child: Icon(
-        icon,
-        color: color,
-        size: 28,
-      ),
+      child: Icon(icon, color: color, size: 28),
     );
   }
 }
