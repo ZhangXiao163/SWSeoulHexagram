@@ -31,6 +31,15 @@ class StrConfig {
       'talk_hint': '输入你的口味偏好...',
       'error': '发生了错误...',
       'current_language': '中文(Chinese)', // 添加这一行
+      'login': '登录',
+      //登录界面的
+
+      'lg_welcome': '欢迎登录',
+      'lg_wel_ai': '登陆后即可体验AI智能搜索',
+      'please_acc': '请输入账号',
+      'please_pwd': '请输入密码',
+      'no_acc': '还没有账号？',
+      'register_soon': '立即注册？',
     },
     'ko': {
       'search_hint': '음식을 검색하세요...',
@@ -58,6 +67,14 @@ class StrConfig {
       'talk_hint': '입맛 취향을 입력하세요...',
       'error': '오류가 발생했습니다...',
       'current_language': '한국어(Korean)', // 添加这一行
+      'login': '로그인',
+      // 登录界面
+      'lg_welcome': '로그인 환영합니다',
+      'lg_wel_ai': '로그인 후 AI 스마트 검색을 이용할 수 있습니다',
+      'please_acc': '계정을 입력하세요',
+      'please_pwd': '비밀번호를 입력하세요',
+      'no_acc': '아직 계정이 없으신가요?',
+      'register_soon': '지금 회원가입',
     },
   };
 
@@ -89,6 +106,22 @@ class StrConfig {
 
   String get errorMessage => _data[locale.languageCode]!['error']!;
   String get currentLanguageName => _data[locale.languageCode]!['current_language']!;
+  String get login => _data[locale.languageCode]!['login']!;
+
+
+  // 登录界面
+  String get lgWelcome => _data[locale.languageCode]!['lg_welcome']!;
+
+  String get lgWelAi => _data[locale.languageCode]!['lg_wel_ai']!;
+
+  String get pleaseAcc => _data[locale.languageCode]!['please_acc']!;
+
+  String get pleasePwd => _data[locale.languageCode]!['please_pwd']!;
+
+  String get noAcc => _data[locale.languageCode]!['no_acc']!;
+
+  String get registerSoon => _data[locale.languageCode]!['register_soon']!;
+
   static StrConfig of(BuildContext context) {
     return StrConfig(Localizations.localeOf(context));
   }

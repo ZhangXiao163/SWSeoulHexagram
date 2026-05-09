@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:ai_food/login.dart';
 import 'package:flutter/material.dart';
 
 import 'AiInputPage.dart';
@@ -55,7 +56,10 @@ class TakeoutHomePage extends StatelessWidget {
           SliverToBoxAdapter(
             child: Container(
               height: 20,
-              color: Theme.of(context).colorScheme.inversePrimary,
+              color: Theme
+                  .of(context)
+                  .colorScheme
+                  .inversePrimary,
             ),
           ),
 
@@ -88,8 +92,10 @@ class TakeoutHomePage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               child: Row(
-                children:  [
-                  Text(StrConfig.of(context).nearby,
+                children: [
+                  Text(StrConfig
+                      .of(context)
+                      .nearby,
                       style:
                       TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   SizedBox(width: 15),
@@ -145,7 +151,8 @@ class TakeoutHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildBottomNav(BuildContext context) { // 加上 context 参数
+  Widget _buildBottomNav(BuildContext context) {
+    // 加上 context 参数
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       selectedItemColor: Colors.black,
@@ -153,16 +160,20 @@ class TakeoutHomePage extends StatelessWidget {
       items: [
         BottomNavigationBarItem(
           icon: const Icon(Icons.fastfood),
-          label: StrConfig.of(context).takeout, // 使用动态翻译
+          label: StrConfig
+              .of(context)
+              .takeout, // 使用动态翻译
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.receipt_long),
-          label: StrConfig.of(context).order,
+          label: StrConfig
+              .of(context)
+              .order,
         ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.person),
-          label: StrConfig.of(context).mine,
-        ),
+        // BottomNavigationBarItem(
+        //   icon: const Icon(Icons.person),
+        //   label: StrConfig.of(context).mine,
+        // ),
       ],
     );
   }
@@ -208,22 +219,25 @@ class _CategorySectionState extends State<CategorySection>
     // 初始化 5 个动画控制器（对应 5 个分类）
     _controllers = List.generate(
       5,
-          (i) => AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 450),
-      ),
+          (i) =>
+          AnimationController(
+            vsync: this,
+            duration: const Duration(milliseconds: 450),
+          ),
     );
 
     _slideAnims = _controllers
-        .map((c) => Tween<Offset>(
-      begin: const Offset(0, 0.8),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
+        .map((c) =>
+        Tween<Offset>(
+          begin: const Offset(0, 0.8),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
         .toList();
 
     _fadeAnims = _controllers
-        .map((c) => Tween<double>(begin: 0, end: 1)
-        .animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
+        .map((c) =>
+        Tween<double>(begin: 0, end: 1)
+            .animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
         .toList();
 
     // 逐个延迟启动动画
@@ -236,7 +250,8 @@ class _CategorySectionState extends State<CategorySection>
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
+    for (final c in _controllers)
+      c.dispose();
     super.dispose();
   }
 
@@ -245,11 +260,21 @@ class _CategorySectionState extends State<CategorySection>
     // 【关键修改】：在 build 内部获取多语言文字
     // 这样每次语言切换触发 build 时，文字都会更新，且不会报 context 错误
     final List<String> items = [
-      StrConfig.of(context).chineseFood,
-      StrConfig.of(context).westernFood,
-      StrConfig.of(context).krFood,
-      StrConfig.of(context).thaiFood,
-      StrConfig.of(context).vitFood,
+      StrConfig
+          .of(context)
+          .chineseFood,
+      StrConfig
+          .of(context)
+          .westernFood,
+      StrConfig
+          .of(context)
+          .krFood,
+      StrConfig
+          .of(context)
+          .thaiFood,
+      StrConfig
+          .of(context)
+          .vitFood,
     ];
 
     return Row(
@@ -273,7 +298,8 @@ class _CategorySectionState extends State<CategorySection>
                     child: Image.asset(
                       _icons[i],
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, __, ___) =>
+                      const Icon(
                           Icons.fastfood,
                           size: 20,
                           color: Colors.grey),
@@ -399,72 +425,20 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
   // }
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(BuildContext context, double shrinkOffset,
+      bool overlapsContent) {
     return Container(
       color: const Color(0xFFCDB7F6),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Row(
         children: [
-          const SizedBox(width: 5),
-
-          // 1. 搜索框
-          Expanded(
-            child: Container(
-              height: 38,
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: const Color(0xFFFFD233),
-                  width: 2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 6),
-                  const Icon(Icons.search, color: Colors.grey, size: 18),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      StrConfig.of(context).searchHint, // 使用之前在 S 类中定义的 getter
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => _onTouchSearch(context),
-                    child: Container(
-                      height: 28,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFD400),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      alignment: Alignment.center,
-                      child:  Text(
-                        StrConfig.of(context).searchBtn,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // 2. Gemini AI按钮
+          const SizedBox(width: 2),
+// --- 新增：登录按钮 (参考问问Gemini样式) ---
           GestureDetector(
-            // 关键 1: 确保点击区域覆盖整个 Container，即使是空白处
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              print("点击了 AI 按钮"); // 调试用
-              _onTouchSearch(context);
+              _onTouchLogin(context);
+              print("点击了登录按钮");
             },
             child: Container(
               height: 38,
@@ -474,75 +448,186 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                 borderRadius: BorderRadius.circular(22),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min, // 确保 Row 只占用必要的宽度
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: const BoxDecoration(shape: BoxShape.circle),
-                    child: ClipOval(
-                      child: Image.asset(
-                        "assets/images/tiger.png",
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.face, size: 18, color: Colors.purple),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  // 关键 2: 移除 RichText 外层可能的 const，确保 StrConfig 动态生效
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: StrConfig.of(context).askGemini,
-                          style: const TextStyle(
-                            color: Color(0xFF6D5AE6),
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'NanumGothic', // 如果你配置了韩文字体，可以在这里指定
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
 
-          // 3. 新增：语言切换按钮
-          // 在 Row 的最后添加这个按钮
-          GestureDetector(
-            onTap: () {
-              // 切换语言逻辑
-              // 切换逻辑：如果是 zh 就切到 ko，反之切回 zh
-              appLocale.value = appLocale.value.languageCode == 'zh'
-                  ? const Locale('ko')
-                  : const Locale('zh');
-            },
-            child: Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                appLocale.value.languageCode == 'zh' ? "中" : "한",
-                style: const TextStyle(
-                  color: Color(0xFF6D5AE6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                Container(
+                width: 20,
+                height: 20,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    "assets/images/tiger.png",
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                    const Icon(
+                      Icons.face,
+                      size: 18,
+                      color: Color(0xFF6D5AE6),
+                    ),
+                  ),
                 ),
               ),
+
+              const SizedBox(width: 4),
+
+              Text(
+                  StrConfig
+                      .of(context)
+                      .login,
+                  style: const TextStyle(
+                  color: Color(0xFF6D5AE6),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(width: 3),
         ],
       ),
+    ),
+    ),
+    const SizedBox(width: 5),
+    // 1. 搜索框
+    Expanded(
+    child: Container(
+    height: 38,
+    padding: const EdgeInsets.symmetric(horizontal: 6),
+    decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(22),
+    border: Border.all(
+    color: const Color(0xFFFFD233),
+    width: 2,
+    ),
+    ),
+    child: Row(
+    children: [
+
+    const SizedBox(width: 6),
+    const Icon(Icons.search, color: Colors.grey, size: 18),
+    const SizedBox(width: 6),
+    Expanded(
+    child: Text(
+    StrConfig.of(context).searchHint, // 使用之前在 S 类中定义的 getter
+    style: const TextStyle(color: Colors.grey, fontSize: 13),
+    ),
+    ),
+    GestureDetector(
+    onTap: () => _onTouchSearch(context),
+    child: Container(
+    height: 28,
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+    decoration: BoxDecoration(
+    color: const Color(0xFFFFD400),
+    borderRadius: BorderRadius.circular(16),
+    ),
+    alignment: Alignment.center,
+    child: Text(
+    StrConfig.of(context).searchBtn,
+    style: TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 12,
+    color: Colors.black,
+    ),
+    ),
+    ),
+    ),
+    ],
+    ),
+    ),
+    ),
+
+    const SizedBox(width: 8),
+
+    // 2. Gemini AI按钮
+    GestureDetector(
+    // 关键 1: 确保点击区域覆盖整个 Container，即使是空白处
+    behavior: HitTestBehavior.opaque,
+    onTap: () {
+    print("点击了 AI 按钮"); // 调试用
+    _onTouchSearch(context);
+    },
+    child: Container(
+    height: 38,
+    padding: const EdgeInsets.symmetric(horizontal: 10),
+    decoration: BoxDecoration(
+    color: Colors.white.withOpacity(0.9),
+    borderRadius: BorderRadius.circular(22),
+    ),
+    child: Row(
+    mainAxisSize: MainAxisSize.min, // 确保 Row 只占用必要的宽度
+    children: [
+    Container(
+    width: 24,
+    height: 24,
+    decoration: const BoxDecoration(shape: BoxShape.circle),
+    child: ClipOval(
+    child: Image.asset(
+    "assets/images/tiger.png",
+    fit: BoxFit.cover,
+    errorBuilder: (context, error, stackTrace) =>
+    const Icon(Icons.face, size: 18, color: Colors.purple),
+    ),
+    ),
+    ),
+    const SizedBox(width: 6),
+    // 关键 2: 移除 RichText 外层可能的 const，确保 StrConfig 动态生效
+    RichText(
+    text: TextSpan(
+    children: [
+    TextSpan(
+    text: StrConfig.of(context).askGemini,
+    style: const TextStyle(
+    color: Color(0xFF6D5AE6),
+    fontSize: 12,
+    fontWeight: FontWeight.bold,
+    fontFamily: 'NanumGothic', // 如果你配置了韩文字体，可以在这里指定
+    ),
+    ),
+    ],
+    ),
+    ),
+    ],
+    ),
+    ),
+    ),
+    const SizedBox(width: 8),
+
+    // 3. 新增：语言切换按钮
+    // 在 Row 的最后添加这个按钮
+    GestureDetector(
+    onTap: () {
+    // 切换语言逻辑
+    // 切换逻辑：如果是 zh 就切到 ko，反之切回 zh
+    appLocale.value = appLocale.value.languageCode == 'zh'
+    ? const Locale('ko')
+        : const Locale('zh');
+    },
+    child: Container(
+    width: 38,
+    height: 38,
+    decoration: BoxDecoration(
+    color: Colors.white.withOpacity(0.9),
+    shape: BoxShape.circle,
+    ),
+    alignment: Alignment.center,
+    child: Text(
+    appLocale.value.languageCode == 'zh' ?   "한":"中",
+    style: const TextStyle(
+    color: Color(0xFF6D5AE6),
+    fontSize: 12,
+    fontWeight: FontWeight.bold,
+    ),
+    ),
+    ),
+    ),
+    const SizedBox(width: 3)
+    ,
+    ]
+    ,
+    )
+    ,
     );
   }
 
@@ -552,7 +637,27 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const AiFoodChatScreen(),
+        pageBuilder: (context, animation,
+            secondaryAnimation) => const AiFoodChatScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _onTouchLogin(BuildContext context) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation,
+            secondaryAnimation) => const LoginPage(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
@@ -568,8 +673,10 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   double get maxExtent => 58;
+
   @override
   double get minExtent => 58;
+
   @override
   bool shouldRebuild(_StickySearchBarDelegate oldDelegate) => false;
 }
