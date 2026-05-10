@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/StrConfig.dart';
+import '../detail_page.dart';
 import 'TrendItem.dart';
 import 'gemini_service.dart';
 
@@ -429,35 +430,43 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
 
   Widget _buildAiBubble(ChatMessage msg, int index) {
     final isFirst = index == 0;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _avatar(isAi: true), // 这里是你的小老虎 icon
+        _avatar(isAi: true),
         const SizedBox(width: 8),
+
         Flexible(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 动态榜单展示逻辑
+
+              // 榜单
               if (isFirst) ...[
                 if (_isTrendLoading)
                   const Padding(
                     padding: EdgeInsets.all(20),
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   )
                 else if (_trends.isNotEmpty)
                   AiTrendListView(
                     trends: _trends,
                     onTrendTap: (name) => _send("我想了解更多关于 $name 的信息"),
                   ),
+
                 const SizedBox(height: 12),
               ],
 
-              // 原有的 AI 文本消息
+              // AI 文本
               if (msg.text.isNotEmpty)
-              // 修改后（用回你原来的文本容器代码）
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
@@ -467,8 +476,21 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
                       bottomLeft: Radius.circular(4),
                     ),
                   ),
-                  child: Text(msg.text, style: const TextStyle(fontSize: 14, height: 1.5)),
+                  child: Text(
+                    msg.text,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
                 ),
+
+              // ⭐⭐⭐ FOOD CARDS ⭐⭐⭐
+              if (msg.foodCards != null &&
+                  msg.foodCards!.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _buildFoodCards(msg.foodCards!),
+              ],
             ],
           ),
         ),
@@ -497,6 +519,10 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
         //这里 监听用户下单
        // widget.onOrder?.call(card); // 通知外部
         //_send('我想要 ${card.name}');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => DetailPage(productId: card.name,)),
+        );
       },
     child: Container(
     padding: const EdgeInsets.all(10),

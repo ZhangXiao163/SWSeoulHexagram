@@ -18,6 +18,9 @@ class StrConfig {
       'takeout': '外卖',
       'mine': '我的',
       'order': '订单',
+
+
+
       // 顶部标题栏
       'ai_helper_title': 'AI 食物助手',
       'ai_helper_subtitle': '告诉我你想吃什么 ✨',
@@ -41,6 +44,12 @@ class StrConfig {
       'no_acc': '还没有账号？',
       'register_soon': '立即注册？',
       'login_toss': '账号和密码不能为空',
+
+      //详情页
+      'add_cart': '加入购物车',
+      'user_review': '用户评价',
+      'count': '合计',
+      'ai_working': 'AI 生成评价中...',
     },
     'ko': {
       'search_hint': '음식을 검색하세요...',
@@ -77,6 +86,12 @@ class StrConfig {
       'no_acc': '아직 계정이 없으신가요?',
       'register_soon': '지금 회원가입',
       'login_toss': '계정과 비밀번호는 비워둘 수 없습니까',
+
+      //详情页
+      'add_cart': '장바구니에 담기',
+      'user_review': '사용자 평가',
+      'count': '도합',
+      'ai_working': 'AI 생성 평가 중. ..',
     },
   };
 
@@ -124,6 +139,11 @@ class StrConfig {
   String get loginToss => _data[locale.languageCode]!['login_toss']!;
 
   String get registerSoon => _data[locale.languageCode]!['register_soon']!;
+
+  String get count => _data[locale.languageCode]!['count']!;
+  String get addCart => _data[locale.languageCode]!['add_cart']!;
+  String get userReview => _data[locale.languageCode]!['user_review']!;
+  String get aiWorking => _data[locale.languageCode]!['ai_working']!;
 
   static StrConfig of(BuildContext context) {
     return StrConfig(Localizations.localeOf(context));

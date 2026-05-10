@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'package:ai_food/config/login_manager.dart';
 import 'package:ai_food/login.dart';
+import 'package:ai_food/service/merchant_repository.dart';
 import 'package:flutter/material.dart';
 
 import 'AiInputPage.dart';
+import 'MerchantSearchDelegate.dart';
 import 'ai/ai_search_page.dart';
 import 'ai/ai_talk.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'bean/MerchantModel.dart';
 import 'config/StrConfig.dart';
+import 'detail_page.dart';
 
 // 1. 定义全局变量
 ValueNotifier<Locale> appLocale = ValueNotifier(const Locale('zh'));
@@ -43,7 +47,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
 class TakeoutHomePage extends StatefulWidget {
   const TakeoutHomePage({super.key});
 
@@ -52,6 +55,43 @@ class TakeoutHomePage extends StatefulWidget {
 }
 
 class _TakeoutHomePageState extends State<TakeoutHomePage> {
+  final MerchantRepository _repository = MerchantRepository();
+
+  // 新增三个状态变量
+  List<MerchantModel> _merchants = [];
+  bool _isLoading = false;
+  String? _errorMsg;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMerchants();
+    appLocale.addListener(_onLocaleChanged); // 监听语言切换
+  }
+
+  void _onLocaleChanged() => _loadMerchants(); // 切语言 → 重新拉取
+
+  @override
+  void dispose() {
+    appLocale.removeListener(_onLocaleChanged); // 记得移除
+    super.dispose();
+  }
+
+  Future<void> _loadMerchants() async {
+    setState(() {
+      _isLoading = true;
+      _errorMsg = null;
+    });
+    try {
+      // 把当前语言传入
+      final list = await _repository.fetchNearbyMerchants(appLocale.value);
+      setState(() => _merchants = list);
+    } catch (e) {
+      setState(() => _errorMsg = e.toString());
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +103,7 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
           SliverToBoxAdapter(
             child: Container(
               height: 20,
-              color: Theme
-                  .of(context)
-                  .colorScheme
-                  .inversePrimary,
+              color: Theme.of(context).colorScheme.inversePrimary,
             ),
           ),
 
@@ -102,11 +139,10 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
               child: Row(
                 children: [
-                  Text(StrConfig
-                      .of(context)
-                      .nearby,
-                      style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    StrConfig.of(context).nearby,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   SizedBox(width: 15),
                 ],
               ),
@@ -114,48 +150,151 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
           ),
 
           // 6. 商家列表
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildMerchantCard(),
-              childCount: 10,
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_errorMsg != null)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
+                    const SizedBox(height: 12),
+                    Text(
+                      _errorMsg!,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadMerchants,
+                      child: const Text('重试'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_merchants.isEmpty)
+            const SliverFillRemaining(child: Center(child: Text('附近暂无商家')))
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildMerchantCard(_merchants[index]),
+                childCount: _merchants.length,
+              ),
             ),
-          ),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(context),
     );
   }
 
-  Widget _buildMerchantCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-          color: Colors.white, borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
+  Widget _buildMerchantCard(MerchantModel merchant) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () {
+        //  跳转商家详情页
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const DetailPage(productId:'牛肉饭',)),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                merchant.imageUrl,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 80,
+                  height: 80,
                   color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8))),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text("奈雪的茶 (北京新地佰...)",
-                    style:
-                    TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                SizedBox(height: 5),
-                Text("月售1000+  起送￥20  免配送费",
-                    style: TextStyle(color: Colors.grey, fontSize: 12)),
-              ],
+                  child: const Icon(Icons.store, color: Colors.grey),
+                ),
+              ),
             ),
-          )
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    merchant.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: Colors.orange, size: 14),
+                      const SizedBox(width: 2),
+                      Text(
+                        merchant.rating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.access_time,
+                        size: 13,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        merchant.deliveryTime,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  // tags 直接遍历，接口返回什么渲染什么
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: merchant.tags
+                        .map((tag) => _buildTag(tag))
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTag(String tag) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.orange.shade200),
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Text(
+        tag,
+        style: TextStyle(color: Colors.orange.shade700, fontSize: 10),
       ),
     );
   }
@@ -169,15 +308,11 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
       items: [
         BottomNavigationBarItem(
           icon: const Icon(Icons.fastfood),
-          label: StrConfig
-              .of(context)
-              .takeout, // 使用动态翻译
+          label: StrConfig.of(context).takeout, // 使用动态翻译
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.receipt_long),
-          label: StrConfig
-              .of(context)
-              .order,
+          label: StrConfig.of(context).order,
         ),
         // BottomNavigationBarItem(
         //   icon: const Icon(Icons.person),
@@ -207,7 +342,6 @@ class CategorySection extends StatefulWidget {
 
 class _CategorySectionState extends State<CategorySection>
     with TickerProviderStateMixin {
-
   // 图片路径是固定的，可以放在这里
   final List<String> _icons = [
     "assets/images/chinese_food.png",
@@ -228,25 +362,28 @@ class _CategorySectionState extends State<CategorySection>
     // 初始化 5 个动画控制器（对应 5 个分类）
     _controllers = List.generate(
       5,
-          (i) =>
-          AnimationController(
-            vsync: this,
-            duration: const Duration(milliseconds: 450),
-          ),
+      (i) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 450),
+      ),
     );
 
     _slideAnims = _controllers
-        .map((c) =>
-        Tween<Offset>(
-          begin: const Offset(0, 0.8),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
+        .map(
+          (c) => Tween<Offset>(
+            begin: const Offset(0, 0.8),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: c, curve: Curves.easeOut)),
+        )
         .toList();
 
     _fadeAnims = _controllers
-        .map((c) =>
-        Tween<double>(begin: 0, end: 1)
-            .animate(CurvedAnimation(parent: c, curve: Curves.easeOut)))
+        .map(
+          (c) => Tween<double>(
+            begin: 0,
+            end: 1,
+          ).animate(CurvedAnimation(parent: c, curve: Curves.easeOut)),
+        )
         .toList();
 
     // 逐个延迟启动动画
@@ -259,8 +396,7 @@ class _CategorySectionState extends State<CategorySection>
 
   @override
   void dispose() {
-    for (final c in _controllers)
-      c.dispose();
+    for (final c in _controllers) c.dispose();
     super.dispose();
   }
 
@@ -269,21 +405,11 @@ class _CategorySectionState extends State<CategorySection>
     // 【关键修改】：在 build 内部获取多语言文字
     // 这样每次语言切换触发 build 时，文字都会更新，且不会报 context 错误
     final List<String> items = [
-      StrConfig
-          .of(context)
-          .chineseFood,
-      StrConfig
-          .of(context)
-          .westernFood,
-      StrConfig
-          .of(context)
-          .krFood,
-      StrConfig
-          .of(context)
-          .thaiFood,
-      StrConfig
-          .of(context)
-          .vitFood,
+      StrConfig.of(context).chineseFood,
+      StrConfig.of(context).westernFood,
+      StrConfig.of(context).krFood,
+      StrConfig.of(context).thaiFood,
+      StrConfig.of(context).vitFood,
     ];
 
     return Row(
@@ -307,11 +433,11 @@ class _CategorySectionState extends State<CategorySection>
                     child: Image.asset(
                       _icons[i],
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                      const Icon(
-                          Icons.fastfood,
-                          size: 20,
-                          color: Colors.grey),
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.fastfood,
+                        size: 20,
+                        color: Colors.grey,
+                      ),
                     ),
                   ),
                 ),
@@ -409,8 +535,7 @@ class _ImageBannerCarouselState extends State<ImageBannerCarousel> {
               height: 4,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(2),
-                color:
-                _currentPage == index ? Colors.orange : Colors.grey[300],
+                color: _currentPage == index ? Colors.orange : Colors.grey[300],
               ),
             );
           }),
@@ -429,7 +554,11 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
   _StickySearchBarDelegate({required this.onRefresh}); // 新增构造
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return Container(
       color: const Color(0xFFCDB7F6),
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -441,7 +570,7 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
-              if(LoginManager.instance.isLogin){
+              if (LoginManager.instance.isLogin) {
                 return;
               }
               _onTouchLogin(context);
@@ -460,39 +589,38 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                   Container(
                     width: 20,
                     height: 20,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: const BoxDecoration(shape: BoxShape.circle),
                     child: ClipOval(
                       child: Image.asset(
                         "assets/images/tiger.png",
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                        const Icon(
-                          Icons.face,
-                          size: 18,
-                          color: Color(0xFF6D5AE6),
-                        ),
+                            const Icon(
+                              Icons.face,
+                              size: 18,
+                              color: Color(0xFF6D5AE6),
+                            ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 4),
 
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 48),
-                child:  Text(
-                LoginManager.instance.isLogin
-                    ? LoginManager.instance.getLoginName()
-                    : StrConfig.of(context).login,
-                style: const TextStyle(
-                  color: Color(0xFF6D5AE6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis, // 超出显示...
-                // 或者用 TextOverflow.fade
-              ),),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 48),
+                    child: Text(
+                      LoginManager.instance.isLogin
+                          ? LoginManager.instance.getLoginName()
+                          : StrConfig.of(context).login,
+                      style: const TextStyle(
+                        color: Color(0xFF6D5AE6),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis, // 超出显示...
+                      // 或者用 TextOverflow.fade
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -502,31 +630,31 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
 
           // 搜索框
           Expanded(
-            child: Container(
-              height: 38,
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: const Color(0xFFFFD233),
-                  width: 2,
+            child: GestureDetector(
+              onTap: () => _onTouchSearch(context),
+              child: Container(
+                height: 38,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: const Color(0xFFFFD233), width: 2),
                 ),
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 6),
-                  const Icon(Icons.search, color: Colors.grey, size: 18),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      StrConfig.of(context).searchHint,
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 6),
+                    const Icon(Icons.search, color: Colors.grey, size: 18),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        StrConfig.of(context).searchHint,
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () => _onTouchSearch(context),
-                    child: Container(
+                    Container(
                       height: 28,
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
@@ -543,8 +671,8 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -556,7 +684,7 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
             behavior: HitTestBehavior.opaque,
             onTap: () {
               print("点击了 AI 按钮");
-              _onTouchSearch(context);
+              _onTouchAi(context);
             },
             child: Container(
               height: 38,
@@ -577,7 +705,11 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
                         "assets/images/tiger.png",
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                        const Icon(Icons.face, size: 18, color: Colors.purple),
+                            const Icon(
+                              Icons.face,
+                              size: 18,
+                              color: Colors.purple,
+                            ),
                       ),
                     ),
                   ),
@@ -637,11 +769,18 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   void _onTouchSearch(BuildContext context) {
+    showSearch(
+      context: context,
+      delegate: MerchantSearchDelegate(locale: appLocale.value),
+    );
+  }
+
+  void _onTouchAi(BuildContext context) {
     Navigator.push(
       context,
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-        const AiFoodChatScreen(),
+            const AiFoodChatScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
@@ -660,7 +799,7 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
       context,
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-        const LoginPage(),
+            const LoginPage(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
             opacity: animation,
