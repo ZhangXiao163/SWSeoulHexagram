@@ -1,0 +1,36 @@
+// ── 数据模型 ───────────────────────────────────────────────
+class ReviewModel {
+  final String name;
+  final String content;
+  final double rating;
+
+  const ReviewModel({
+    required this.name,
+    required this.content,
+    required this.rating,
+  });
+}
+
+class DishDetailModel {
+  final String id;
+  final String name;
+  final String nameZh;       // 副标题（中文）
+  final String imageUrl;     // 本地 asset 或网络图
+  final double price;
+  final String currency;
+  final String description;
+  final List<String> tags;
+  final List<ReviewModel> reviews;
+
+  const DishDetailModel({
+    required this.id,
+    required this.name,
+    required this.nameZh,
+    required this.imageUrl,
+    required this.price,
+    required this.currency,
+    required this.description,
+    required this.tags,
+    required this.reviews,
+  });
+}
