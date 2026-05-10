@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'config/app_theme.dart';
-import 'config/common_card.dart'; // 假设你之前的 CommonCard 在这个文件
+import 'config/common_card.dart';
+import 'order_confirm_page.dart'; // 假设你之前的 CommonCard 在这个文件
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -113,6 +114,10 @@ class _CartPageState extends State<CartPage> {
             ElevatedButton(
               onPressed: () {
                 // 这里可以写结算逻辑
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const OrderConfirmPage()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,

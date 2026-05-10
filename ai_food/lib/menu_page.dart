@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'detail_page.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -215,6 +217,11 @@ class _MenuPageState extends State<MenuPage> {
                                     '${item["name"]} 已加入购物车',
                                   ),
                                 ),
+                              );
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const DetailPage(productId:'牛肉饭',)),
                               );
                             },
                           ),

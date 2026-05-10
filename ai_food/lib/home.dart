@@ -4,15 +4,13 @@ import 'package:ai_food/login.dart';
 import 'package:ai_food/service/merchant_repository.dart';
 import 'package:flutter/material.dart';
 
-import 'AiInputPage.dart';
 import 'MerchantSearchDelegate.dart';
-import 'ai/ai_search_page.dart';
 import 'ai/ai_talk.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'bean/MerchantModel.dart';
 import 'config/StrConfig.dart';
-import 'detail_page.dart';
+import 'menu_page.dart';
 
 // 1. 定义全局变量
 ValueNotifier<Locale> appLocale = ValueNotifier(const Locale('zh'));
@@ -197,8 +195,12 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
         //  跳转商家详情页
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const DetailPage(productId:'牛肉饭',)),
+          MaterialPageRoute(builder: (context) => const MenuPage()),
         );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(builder: (context) => const DetailPage(productId:'牛肉饭',)),
+        // );
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
