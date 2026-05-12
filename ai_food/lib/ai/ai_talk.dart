@@ -13,8 +13,6 @@ void main() {
 }
 
 
-
-
 class AiFoodApp extends StatelessWidget {
   const AiFoodApp({super.key});
 
@@ -89,6 +87,7 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
 - 保持亲切自然的语气。
 ''';
   }
+
   final List<Map<String, dynamic>> _history = [];
 
   Future<ChatMessage> sendMessage(String userText, String systemPrompt) async {
@@ -171,7 +170,7 @@ class _AiFoodChatScreenState extends State<AiFoodChatScreen> {
 
   // --- 检查并确保以下变量都在这里 ---
   final List<ChatMessage> _messages = [];
-  bool _loading = false;        // 修复你现在的报错
+  bool _loading = false; // 修复你现在的报错
 
   // ------------------------------
 
@@ -196,10 +195,13 @@ class _AiFoodChatScreenState extends State<AiFoodChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _addAssistantMessage(ChatMessage(
         role: 'assistant',
-        text: StrConfig.of(context).aiGreeting,
+        text: StrConfig
+            .of(context)
+            .aiGreeting,
       ));
     });
   }
+
 // 2. 编写抓取逻辑
   Future<void> _fetchDynamicTrends() async {
     // 关键修复：确保 context 已经挂载到树上
@@ -209,7 +211,9 @@ class _AiFoodChatScreenState extends State<AiFoodChatScreen> {
     setState(() => _isTrendLoading = true);
 
     // 现在可以安全使用 context 了
-    final bool isKorean = Localizations.localeOf(context).languageCode == 'ko';
+    final bool isKorean = Localizations
+        .localeOf(context)
+        .languageCode == 'ko';
     final String languageName = isKorean ? "韩语(Korean)" : "中文(Chinese)";
     try {
       final geminiService = GeminiService();
@@ -223,8 +227,10 @@ class _AiFoodChatScreenState extends State<AiFoodChatScreen> {
             "parts": [{
               // 2. 在提示词中明确要求语言
               "text": "请以精简JSON数组格式返回5个当前韩国最火外卖。请使用 $languageName 回复内容。格式：[{\"rank\":1,\"name\":\"名字\",\"reason\":\"一句话原因\",\"search\":\"关键词\"}]"
-            }]
-          }]
+            }
+            ]
+          }
+          ]
         }),
       );
 
@@ -266,11 +272,15 @@ class _AiFoodChatScreenState extends State<AiFoodChatScreen> {
   }
 
   Future<void> _send(String text) async {
-    if (text.trim().isEmpty || _loading) return;
+    if (text
+        .trim()
+        .isEmpty || _loading) return;
 
     // 1. 从 StrConfig 获取当前语言的显示名称 (例如 "中文" 或 "한국어")
     // 确保你的 StrConfig 里有这个字段，或者直接根据逻辑判断
-    final String currentLangName = StrConfig.of(context).currentLanguageName;
+    final String currentLangName = StrConfig
+        .of(context)
+        .currentLanguageName;
 
     // 2. 构造动态的 System Prompt
     final String dynamicSystemPrompt = '''
@@ -307,13 +317,16 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
         // 错误提示也可以通过 StrConfig 获取，实现完全多语言
         _messages.add(ChatMessage(
             role: 'assistant',
-            text: StrConfig.of(context).errorMessage // '抱歉，连接出错了'
+            text: StrConfig
+                .of(context)
+                .errorMessage // '抱歉，连接出错了'
         ));
         _loading = false;
       });
     }
     _scrollToBottom();
   }
+
   // ─── Build ───
 
   @override
@@ -366,14 +379,18 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                StrConfig.of(context).aiHelperTitle, // 'AI 食物助手' / 'AI 푸드 헬퍼'
+                StrConfig
+                    .of(context)
+                    .aiHelperTitle, // 'AI 食物助手' / 'AI 푸드 헬퍼'
                 style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w600),
               ),
               Text(
-                StrConfig.of(context).aiHelperSubtitle, // '告诉我你想吃什么 ✨' / '먹고 싶은 메뉴를 알려주세요 ✨'
+                StrConfig
+                    .of(context)
+                    .aiHelperSubtitle, // '告诉我你想吃什么 ✨' / '먹고 싶은 메뉴를 알려주세요 ✨'
                 style: const TextStyle(color: Colors.white70, fontSize: 12),
               ),
             ],
@@ -451,11 +468,13 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   )
-                else if (_trends.isNotEmpty)
-                  AiTrendListView(
-                    trends: _trends,
-                    onTrendTap: (name) => _send("我想了解更多关于 $name 的信息"),
-                  ),
+                else
+                  if (_trends.isNotEmpty)
+                    AiTrendListView(
+                      trends: _trends,
+                      onTrendTap: (name) =>
+                          _send("我想了解更多关于 $name 的信息"),
+                    ),
 
                 const SizedBox(height: 12),
               ],
@@ -517,46 +536,48 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
     return GestureDetector(
       onTap: () {
         //这里 监听用户下单
-       // widget.onOrder?.call(card); // 通知外部
+        // widget.onOrder?.call(card); // 通知外部
         //_send('我想要 ${card.name}');
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => DetailPage(productId: card.name,)),
+          MaterialPageRoute(
+              builder: (context) => DetailPage(productId: card.name,)),
         );
       },
-    child: Container(
-    padding: const EdgeInsets.all(10),
-    decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: const Color(0xFFE0D0F8), width: 0.5),
-    ),
-    child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    Text(card.emoji, style: const TextStyle(fontSize: 22)),
-    const SizedBox(height: 2),
-    Text(card.name,
-    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis),
-    Text(card.desc,
-    style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis),
-    const SizedBox(height: 4),
-    Container(
-    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-    decoration: BoxDecoration(
-    color: const Color(0xFFF0EBFF),
-    borderRadius: BorderRadius.circular(10),
-    ),
-    child: Text(card.tag,
-    style: const TextStyle(fontSize: 10, color: _purpleDark)),
-    ),
-    ],
-    ),
-    ),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE0D0F8), width: 0.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(card.emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(height: 2),
+            Text(card.name,
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+            Text(card.desc,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF888888)),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0EBFF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(card.tag,
+                  style: const TextStyle(fontSize: 10, color: _purpleDark)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -607,7 +628,10 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
         left: 16,
         right: 16,
         top: 10,
-        bottom: MediaQuery.of(context).padding.bottom + 10,
+        bottom: MediaQuery
+            .of(context)
+            .padding
+            .bottom + 10,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -622,7 +646,9 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
                 // 关键修复：将写死的文字换成 StrConfig，并确保外层没有 const
-                hintText: StrConfig.of(context).talkHint,
+                hintText: StrConfig
+                    .of(context)
+                    .talkHint,
                 hintStyle: const TextStyle(
                     color: Color(0xFFBBBBBB), fontSize: 14),
                 contentPadding:
@@ -663,6 +689,7 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
       ),
     );
   }
+
   Widget _avatar({required bool isAi}) {
     return Container(
       width: 30,
@@ -750,7 +777,8 @@ class AiTrendListView extends StatelessWidget {
   final List<TrendItem> trends;
   final Function(String) onTrendTap;
 
-  const AiTrendListView({super.key, required this.trends, required this.onTrendTap});
+  const AiTrendListView(
+      {super.key, required this.trends, required this.onTrendTap});
 
   @override
   Widget build(BuildContext context) {
@@ -776,39 +804,45 @@ class AiTrendListView extends StatelessWidget {
             child: Row(
               children: [
                 // 这里放入你那个可爱的小老虎图标
-              Container(
-              width: 35,
-              height: 35,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0EBFF),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              // 使用 ClipRRect 确保图片超出圆角的部分被裁掉
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  "assets/images/tiger.png",
-                  fit: BoxFit.cover, // 确保图片填满 35x35 的区域
-                  // 如果图片加载失败（路径错或文件丢了），显示一个回退图标
-                  errorBuilder: (context, error, stackTrace) => const Center(
-                    child: Text("🐯", style: TextStyle(fontSize: 20)),
+                Container(
+                  width: 35,
+                  height: 35,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0EBFF),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  // 使用 ClipRRect 确保图片超出圆角的部分被裁掉
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      "assets/images/tiger.png",
+                      fit: BoxFit.cover, // 确保图片填满 35x35 的区域
+                      // 如果图片加载失败（路径错或文件丢了），显示一个回退图标
+                      errorBuilder: (context, error, stackTrace) =>
+                      const Center(
+                        child: Text("🐯", style: TextStyle(fontSize: 20)),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      StrConfig.of(context).trendingTitle, // '今日美食趋势' / '오늘의 맛집 트렌드'
+                      StrConfig
+                          .of(context)
+                          .trendingTitle, // '今日美食趋势' / '오늘의 맛집 트렌드'
                       style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: Color(0xFF7C5CBF)),
                     ),
                     Text(
-                      StrConfig.of(context).trendingUpdate, // '实时更新 · 韩国最火外卖' / '실시간 업데이트 · 한국 인기 배달 메뉴'
+                      StrConfig
+                          .of(context)
+                          .trendingUpdate,
+                      // '实时更新 · 韩国最火外卖' / '실시간 업데이트 · 한국 인기 배달 메뉴'
                       style: const TextStyle(
                           fontSize: 11,
                           color: Colors.grey),
@@ -834,7 +868,8 @@ class AiTrendListView extends StatelessWidget {
               return InkWell(
                 onTap: () => onTrendTap(item.name),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 10),
                   child: Row(
                     children: [
                       // 名次
@@ -856,15 +891,18 @@ class AiTrendListView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(item.name,
-                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600, fontSize: 14)),
                             Text(item.reason,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600])),
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+                      const Icon(
+                          Icons.chevron_right, size: 16, color: Colors.grey),
                     ],
                   ),
                 ),
@@ -878,11 +916,15 @@ class AiTrendListView extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: const BoxDecoration(
               color: Color(0xFFF8F5FF),
-              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(20), bottomRight: Radius.circular(20)),
+              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20)),
             ),
             child: Center(
               child: Text(
-                StrConfig.of(context).clickToAsk, // '点击条目直接咨询 AI 推荐 👇' / '항목을 클릭하여 AI 추천을 받아보세요 👇'
+                StrConfig
+                    .of(context)
+                    .clickToAsk,
+                // '点击条目直接咨询 AI 推荐 👇' / '항목을 클릭하여 AI 추천을 받아보세요 👇'
                 style: const TextStyle(
                   fontSize: 11,
                   color: Color(0xFF7C5CBF),

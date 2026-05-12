@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'package:ai_food/AiCartPage.dart';
 import 'package:ai_food/config/login_manager.dart';
 import 'package:ai_food/login.dart';
 import 'package:ai_food/service/merchant_repository.dart';
 import 'package:flutter/material.dart';
 
+import 'FoodOrderListScreen.dart';
 import 'MerchantSearchDelegate.dart';
 import 'ai/ai_talk.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -90,103 +92,108 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
       setState(() => _isLoading = false);
     }
   }
-
+  int _currentIndex = 0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
-      body: CustomScrollView(
-        slivers: [
-          // 1. 顶部占位
-          SliverToBoxAdapter(
-            child: Container(
-              height: 20,
-              color: Theme.of(context).colorScheme.inversePrimary,
-            ),
-          ),
-
-          // 2. 吸顶搜索框
-          // 2. 吸顶搜索框
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _StickySearchBarDelegate(
-              onRefresh: () => setState(() {}),
-            ),
-          ),
-          // 3. 轮播图
-          SliverToBoxAdapter(
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: ImageBannerCarousel(),
-            ),
-          ),
-
-          // 4. 分类动画区
-          SliverToBoxAdapter(
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: const CategorySection(),
-            ),
-          ),
-
-          // 5. 附近商家标题
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: Row(
-                children: [
-                  Text(
-                    StrConfig.of(context).nearby,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 15),
-                ],
-              ),
-            ),
-          ),
-
-          // 6. 商家列表
-          if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_errorMsg != null)
-            SliverFillRemaining(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
-                    const SizedBox(height: 12),
-                    Text(
-                      _errorMsg!,
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _loadMerchants,
-                      child: const Text('重试'),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (_merchants.isEmpty)
-            const SliverFillRemaining(child: Center(child: Text('附近暂无商家')))
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildMerchantCard(_merchants[index]),
-                childCount: _merchants.length,
-              ),
-            ),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _buildHomeBody(),   // ← 原来 body 的内容
+          const FoodOrderListScreen(),
+          const CartPage(),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(context),
     );
   }
+
+
+  // 把原来 body 里的内容提取成一个方法
+  Widget _buildHomeBody() {
+    return CustomScrollView(
+      slivers: [
+        // 1. 顶部占位
+        SliverToBoxAdapter(
+          child: Container(
+            height: 20,
+            color: Theme.of(context).colorScheme.inversePrimary,
+          ),
+        ),
+
+        // 2. 吸顶搜索框
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _StickySearchBarDelegate(
+            onRefresh: () => setState(() {}),
+          ),
+        ),
+
+        // 3. 轮播图
+        SliverToBoxAdapter(
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: ImageBannerCarousel(),
+          ),
+        ),
+
+        // 4. 分类动画区
+        SliverToBoxAdapter(
+          child: Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: const CategorySection(),
+          ),
+        ),
+
+        // 5. 附近商家标题
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            child: Text(
+              StrConfig.of(context).nearby,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+
+        // 6. 商家列表（条件判断内联进来）
+        if (_isLoading)
+          const SliverFillRemaining(
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_errorMsg != null)
+          SliverFillRemaining(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
+                  const SizedBox(height: 12),
+                  Text(_errorMsg!, style: const TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadMerchants,
+                    child: const Text('重试'),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else if (_merchants.isEmpty)
+            const SliverFillRemaining(child: Center(child: Text('附近暂无商家')))
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildMerchantCard(_merchants[index]),
+                childCount: _merchants.length,
+              ),
+            ),
+      ],
+    );
+  }
+
 
   Widget _buildMerchantCard(MerchantModel merchant) {
     return InkWell(
@@ -301,25 +308,29 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
     );
   }
 
+// ③ _buildBottomNav 里的 onTap 补上
   Widget _buildBottomNav(BuildContext context) {
-    // 加上 context 参数
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.black,
-      // 移除这里的 const，因为翻译是动态获取的
+      selectedItemColor: Colors.orange,       // 选中色改成橙色更明显
+      unselectedItemColor: Colors.grey,
+      currentIndex: _currentIndex,            // ← 关键：绑定当前 index
+      onTap: (index) {
+        setState(() => _currentIndex = index); // ← 关键：切换
+      },
       items: [
         BottomNavigationBarItem(
           icon: const Icon(Icons.fastfood),
-          label: StrConfig.of(context).takeout, // 使用动态翻译
+          label: StrConfig.of(context).takeout,
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.receipt_long),
           label: StrConfig.of(context).order,
         ),
-        // BottomNavigationBarItem(
-        //   icon: const Icon(Icons.person),
-        //   label: StrConfig.of(context).mine,
-        // ),
+        BottomNavigationBarItem( // ← 新增
+          icon: const Icon(Icons.shopping_cart),
+          label: StrConfig.of(context).buyCar,
+        ),
       ],
     );
   }

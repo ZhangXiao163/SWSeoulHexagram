@@ -18,8 +18,8 @@ class StrConfig {
       'takeout': '外卖',
       'mine': '我的',
       'order': '订单',
-
-
+      'car': '购物车',
+      'my_order': '我的订单',
 
       // 顶部标题栏
       'ai_helper_title': 'AI 食物助手',
@@ -34,6 +34,9 @@ class StrConfig {
       'talk_hint': '输入你的口味偏好...',
       'error': '发生了错误...',
       'current_language': '中文(Chinese)', // 添加这一行
+
+      'buy_again': '再次购买',
+
       'login': '登录',
       //登录界面的
 
@@ -50,6 +53,7 @@ class StrConfig {
       'user_review': '用户评价',
       'count': '合计',
       'ai_working': 'AI 生成评价中...',
+
     },
     'ko': {
       'search_hint': '음식을 검색하세요...',
@@ -64,6 +68,7 @@ class StrConfig {
       'takeout': '배달',
       'mine': '마이페이지',
       'order': '주문내역',
+      'car': '쇼핑 카트',
       // 顶部标题栏
       'ai_helper_title': 'AI 푸드 헬퍼',
       'ai_helper_subtitle': '먹고 싶은 메뉴를 알려주세요 ✨',
@@ -92,6 +97,9 @@ class StrConfig {
       'user_review': '사용자 평가',
       'count': '도합',
       'ai_working': 'AI 생성 평가 중. ..',
+      'my_order': '나의 주문서',
+
+      'buy_again': '재구매',
     },
   };
 
@@ -144,7 +152,9 @@ class StrConfig {
   String get addCart => _data[locale.languageCode]!['add_cart']!;
   String get userReview => _data[locale.languageCode]!['user_review']!;
   String get aiWorking => _data[locale.languageCode]!['ai_working']!;
-
+  String get buyCar => _data[locale.languageCode]!['car']!;
+  String get myOrder => _data[locale.languageCode]!['my_order']!;
+  String get buyAgain => _data[locale.languageCode]!['buy_again']!;
   static StrConfig of(BuildContext context) {
     return StrConfig(Localizations.localeOf(context));
   }
