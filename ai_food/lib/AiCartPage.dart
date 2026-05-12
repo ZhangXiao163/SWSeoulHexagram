@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'config/app_theme.dart';
-import 'config/common_card.dart';
-import 'order_confirm_page.dart'; // 假设你之前的 CommonCard 在这个文件
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -11,213 +8,227 @@ class CartPage extends StatefulWidget {
 }
 
 class _CartPageState extends State<CartPage> {
-  // 模拟购物车数据源
-  final List<CartItem> _cartList = [
-    CartItem(
-        title: "烤肉",
-        price: 199.0,
-        // 👇 替换这里
-        imageUrl: "https://share.google/Z3f29Gm55DEzChjjP"
-    ),
-    CartItem(
-        title: "人体工学办公椅",
-        price: 899.0,
-        // 👇 替换这里
-        imageUrl: "https://dummyimage.com/150x150/f0f0f0/333.png&text=办公椅"
-    ),
-    CartItem(
-        title: "机械键盘",
-        price: 459.0,
-        // 👇 替换这里
-        imageUrl: "https://dummyimage.com/150x150/f0f0f0/333.png&text=键盘"
-    ),
-  ];
-
-  // 计算总价
-  double get _totalPrice {
-    return _cartList.fold(0, (sum, item) => sum + (item.price * item.quantity));
-  }
-
-  // 修改数量的逻辑
-  void _updateQuantity(int index, int delta) {
-    setState(() {
-      _cartList[index].quantity += delta;
-      // 数量最少为 1
-      if (_cartList[index].quantity < 1) {
-        _cartList[index].quantity = 1;
-      }
-    });
-  }
+  bool isAllSelected = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text('购物车', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
+        title: const Text('购物车 (5)', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        // actions: [
+        //   TextButton(
+        //     onPressed: () {},
+        //     child: const Text('管理', style: TextStyle(color: Colors.black)),
+        //   ),
+        //   IconButton(
+        //     icon: const Icon(Icons.more_horiz, color: Colors.black),
+        //     onPressed: () {},
+        //   ),
+        // ],
       ),
       body: Column(
         children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _cartList.length,
-              itemBuilder: (context, index) {
-                final item = _cartList[index];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: CartItemCard(
-                    item: item,
-                    // 将加减逻辑传递给子组件
-                    onAdd: () => _updateQuantity(index, 1),
-                    onRemove: () => _updateQuantity(index, -1),
-                  ),
-                );
-              },
-            ),
-          ),
-          _buildCheckoutBar(),
-        ],
-      ),
-    );
-  }
+          // 精简后的地址栏：去掉了右侧所有筛选按钮
+          // Container(
+          //   width: double.infinity,
+          //   padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+          //   color: Colors.white,
+          //   child: Row(
+          //     children: const [
+          //       Icon(Icons.location_on, size: 16, color: Colors.grey),
+          //       SizedBox(width: 4),
+          //       Text('景阳胡同1号四合院...', style: TextStyle(fontSize: 13, color: Colors.grey)),
+          //     ],
+          //   ),
+          // ),
 
-  Widget _buildCheckoutBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
-      ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(12),
               children: [
-                const Text('合计', style: TextStyle(color: Colors.grey)),
-                Text(
-                  '¥ ${_totalPrice.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.redAccent),
+                // 店铺分组卡片
+                _buildCartGroup(
+                  shopName: '绿联 (UGREEN) 京东自营旗舰店',
+                  isSelfOperated: true,
+                  items: [
+                    _buildCartItem(
+                      title: '绿联Type-C转千兆扩展坞带网',
+                      spec: '4合1【千兆网口】USB3.0*3',
+                      price: '69.00',
+                      imageUrl: 'assets/images/tiger.png',
+                    ),
+                    _buildCartItem(
+                      title: '绿联安卓快充数据线MicroUSB',
+                      spec: '【热销80W+】1米安卓快充...',
+                      price: '13.90',
+                      imageUrl: 'assets/images/tiger.png',
+                    ),
+                  ],
+                ),
+
+                _buildCartGroup(
+                  shopName: '蟹状元生鲜官方旗舰店',
+                  isSelfOperated: false,
+                  items: [
+                    _buildCartItem(
+                      title: '【礼券】蟹状元 国货海鲜礼券',
+                      spec: '1088型内含10件食材 3800g',
+                      price: '82.90',
+                      imageUrl: 'assets/images/tiger.png',
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+
+      // 底部结算栏
+      bottomNavigationBar: Container(
+        height: 65,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        child: Row(
+          children: [
+            Checkbox(
+              value: isAllSelected,
+              activeColor: const Color(0xFF6D5AE6),
+              shape: const CircleBorder(), // 圆形勾选框更符合现代 UI
+              onChanged: (val) => setState(() => isAllSelected = val!),
+            ),
+            const Text('全选', style: TextStyle(fontSize: 14)),
             const Spacer(),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Row(
+                  children: const [
+                    Text('合计:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    SizedBox(width: 4),
+                    Text('￥82.90', style: TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const Text('优惠￥2.00', style: TextStyle(fontSize: 10, color: Colors.red)),
+              ],
+            ),
+            const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: () {
-                // 这里可以写结算逻辑
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const OrderConfirmPage()),
-                );
-              },
+              onPressed: () {},
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.borderRadius)),
+                backgroundColor: Colors.red,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
               ),
-              child: const Text('去结算', style: TextStyle(color: Colors.white, fontSize: 16)),
+              child: const Text('去结算(2)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-// 优化后的子组件
-class CartItemCard extends StatelessWidget {
-  final CartItem item;
-  final VoidCallback onAdd;
-  final VoidCallback onRemove;
-
-  const CartItemCard({
-    super.key,
-    required this.item,
-    required this.onAdd,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return CommonCard(
-      padding: const EdgeInsets.all(12),
-      child: Row(
+  // 店铺分组容器
+  Widget _buildCartGroup({required String shopName, required bool isSelfOperated, required List<Widget> items}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 12, 12, 4),
+            child: Row(
+              children: [
+                Checkbox(value: false, onChanged: (v) {}, activeColor: const Color(0xFF6D5AE6), shape: const CircleBorder()),
+                if (isSelfOperated)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    margin: const EdgeInsets.only(right: 6),
+                    decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
+                    child: const Text('自营', style: TextStyle(color: Colors.white, fontSize: 10)),
+                  ),
+                Expanded(child: Text(shopName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+              ],
+            ),
+          ),
+          ...items,
+        ],
+      ),
+    );
+  }
+
+  // 商品列表项
+  Widget _buildCartItem({required String title, required String spec, required String price, required String imageUrl}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 12, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Checkbox(value: false, onChanged: (v) {}, activeColor: const Color(0xFF6D5AE6), shape: const CircleBorder()),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.network(item.imageUrl, width: 80, height: 80, fit: BoxFit.cover,
-              // 👇 添加错误处理逻辑
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 80,
-                  height: 80,
-                  color: AppTheme.background, // 或者 Colors.grey.shade200
-                  child: const Icon(Icons.broken_image, color: Colors.grey),
-                );
-              },),
+            child: Image.asset(imageUrl, width: 85, height: 85, fit: BoxFit.cover),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                const SizedBox(height: 8),
-                Text("¥ ${item.price}", style: TextStyle(color: AppTheme.primary)),
+                Text(title, style: const TextStyle(fontSize: 14, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: Color(0xFFF8F8F8), borderRadius: BorderRadius.circular(4)),
+                  child: Text(spec, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('￥$price', style: const TextStyle(color: Colors.red, fontSize: 17, fontWeight: FontWeight.bold)),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          _qtyIcon(Icons.remove),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: const Text('1', style: TextStyle(fontSize: 12)),
+                          ),
+                          _qtyIcon(Icons.add),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-          ),
-          // 数量控制组
-          Row(
-            children: [
-              _qtyButton(Icons.remove, onRemove),
-              Container(
-                alignment: Alignment.center,
-                width: 40,
-                child: Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              _qtyButton(Icons.add, onAdd),
-            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _qtyButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Icon(icon, size: 18, color: Colors.black87),
-      ),
+  Widget _qtyIcon(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(2),
+      child: Icon(icon, size: 16, color: Colors.black87),
     );
   }
-}
-
-class CartItem {
-  final String title;
-  final double price;
-  final String imageUrl;
-  int quantity;
-
-  CartItem({
-    required this.title,
-    required this.price,
-    required this.imageUrl,
-    this.quantity = 1,
-  });
 }
