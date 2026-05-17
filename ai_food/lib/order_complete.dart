@@ -4,6 +4,9 @@ void main() {
   runApp(const MyApp());
 }
 
+const Color mainPurple = Color(0xFFF3ECFF);
+const Color mainYellow = Color(0xFFFFC107);
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -21,151 +24,265 @@ class OrderCompletePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
 
-      // 顶部导航栏
+    return Scaffold(
+
+      backgroundColor: mainPurple,
+
       appBar: AppBar(
-        backgroundColor: Colors.white,
+
+        backgroundColor: mainPurple,
+
         elevation: 0,
 
-        // 返回按钮
+        centerTitle: true,
+
         leading: IconButton(
+
           icon: const Icon(
-            Icons.arrow_back,
+            Icons.arrow_back_ios_new,
             color: Colors.black,
           ),
+
           onPressed: () {},
         ),
 
-        // 标题
         title: const Text(
-          '订单完成',
+          "订单完成",
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ),
-
-        centerTitle: true,
       ),
 
-      // 页面主体
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      // 改这里
+      body: SingleChildScrollView(
 
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
+        child: Center(
 
-            const SizedBox(height: 30),
+          child: Padding(
 
-            // 完成图标
-            Container(
-              width: 100,
-              height: 100,
+            padding: const EdgeInsets.all(24),
 
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                shape: BoxShape.circle,
-              ),
+            child: Container(
 
-              child: const Icon(
-                Icons.check,
-                size: 60,
-                color: Colors.white,
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // 完成文字
-            const Text(
-              '订单已完成！',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            const Text(
-              '感谢您的购买\n祝您用餐愉快',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey,
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // 订单号区域
-            Container(
               width: double.infinity,
 
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(30),
 
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
+
+                color: Colors.white,
+
+                borderRadius: BorderRadius.circular(32),
+
+                boxShadow: [
+
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
 
-              child: const Column(
+              child: Column(
+
+                mainAxisSize: MainAxisSize.min,
+
                 children: [
 
-                  Text(
-                    '订单编号',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
+                  // 完成图标
+                  Container(
+
+                    width: 130,
+                    height: 130,
+
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: mainYellow,
+                    ),
+
+                    child: const Icon(
+                      Icons.check,
+                      size: 75,
+                      color: Colors.white,
                     ),
                   ),
 
-                  SizedBox(height: 8),
+                  const SizedBox(height: 35),
 
-                  Text(
-                    '123456',
+                  // 标题
+                  const Text(
+                    "订单已完成",
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // 副标题
+                  const Text(
+                    "感谢您的购买\n祝您用餐愉快 ㅎㅎ",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
+                      height: 1.6,
+                    ),
+                  ),
+
+                  const SizedBox(height: 35),
+
+                  // 订单信息卡片
+                  Container(
+
+                    width: double.infinity,
+
+                    padding: const EdgeInsets.all(22),
+
+                    decoration: BoxDecoration(
+
+                      color: mainPurple,
+
+                      borderRadius:
+                      BorderRadius.circular(24),
+                    ),
+
+                    child: const Column(
+
+                      children: [
+
+                        Text(
+                          "订单编号",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+
+                        SizedBox(height: 12),
+
+                        Text(
+                          "#20260516001",
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+
+                        SizedBox(height: 18),
+
+                        Divider(),
+
+                        SizedBox(height: 18),
+
+                        Row(
+
+                          mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween,
+
+                          children: [
+
+                            Text(
+                              "支付金额",
+                              style: TextStyle(
+                                fontSize: 16,
+                              ),
+                            ),
+
+                            Text(
+                              "¥15.88",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight:
+                                FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 35),
+
+                  // 返回主页按钮
+                  SizedBox(
+
+                    width: double.infinity,
+                    height: 58,
+
+                    child: ElevatedButton(
+
+                      style: ElevatedButton.styleFrom(
+
+                        backgroundColor: mainYellow,
+
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                          BorderRadius.circular(18),
+                        ),
+
+                        elevation: 0,
+                      ),
+
+                      onPressed: () {},
+
+                      child: const Text(
+                        "返回主页",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 再来一单
+                  SizedBox(
+
+                    width: double.infinity,
+                    height: 58,
+
+                    child: OutlinedButton(
+
+                      style: OutlinedButton.styleFrom(
+
+                        side: BorderSide(
+                          color: Colors.orange.shade300,
+                        ),
+
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                          BorderRadius.circular(18),
+                        ),
+                      ),
+
+                      onPressed: () {},
+
+                      child: const Text(
+                        "再来一单",
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 30),
-
-            // 返回主页按钮
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey.shade700,
-
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(12),
-                  ),
-                ),
-
-                onPressed: () {},
-
-                child: const Text(
-                  '返回主页',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
