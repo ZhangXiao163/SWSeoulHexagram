@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'detail_page.dart';
-
 void main() {
   runApp(const MyApp());
 }
@@ -50,20 +48,24 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
 
-      backgroundColor: Colors.white,
+      // 页面背景颜色
+      backgroundColor: const Color(0xfff7f2fa),
 
       // 顶部导航栏
       appBar: AppBar(
-        backgroundColor: Colors.white,
+
+        backgroundColor: const Color(0xffd7c1ff),
+
         elevation: 0,
 
         // 返回按钮
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
-            color: Colors.black,
+            color: Colors.deepPurple,
           ),
           onPressed: () {
             Navigator.pop(context);
@@ -74,8 +76,9 @@ class _MenuPageState extends State<MenuPage> {
         title: const Text(
           '菜单',
           style: TextStyle(
-            color: Colors.black,
+            color: Colors.deepPurple,
             fontWeight: FontWeight.bold,
+            fontSize: 22,
           ),
         ),
 
@@ -83,10 +86,11 @@ class _MenuPageState extends State<MenuPage> {
 
         // 收藏按钮
         actions: [
+
           IconButton(
             icon: const Icon(
               Icons.favorite_border,
-              color: Colors.black,
+              color: Colors.deepPurple,
             ),
             onPressed: () {},
           ),
@@ -94,33 +98,66 @@ class _MenuPageState extends State<MenuPage> {
       ),
 
       body: Padding(
+
         padding: const EdgeInsets.all(16),
 
         child: Column(
+
           children: [
 
             // 搜索框
             TextField(
+
               decoration: InputDecoration(
+
                 hintText: '搜索菜单',
 
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: TextStyle(
+                  color: Colors.grey.shade500,
+                ),
+
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Colors.grey,
+                ),
 
                 filled: true,
-                fillColor: Colors.grey.shade200,
 
-                border: OutlineInputBorder(
+                fillColor: Colors.white,
+
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 15,
+                ),
+
+                enabledBorder: OutlineInputBorder(
+
                   borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
+
+                  borderSide: const BorderSide(
+                    color: Colors.amber,
+                    width: 2,
+                  ),
+                ),
+
+                focusedBorder: OutlineInputBorder(
+
+                  borderRadius: BorderRadius.circular(30),
+
+                  borderSide: const BorderSide(
+                    color: Colors.orange,
+                    width: 2,
+                  ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // 菜单列表
             Expanded(
+
               child: ListView.builder(
+
                 itemCount: menuList.length,
 
                 itemBuilder: (context, index) {
@@ -128,35 +165,49 @@ class _MenuPageState extends State<MenuPage> {
                   final item = menuList[index];
 
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
 
-                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 18),
+
+                    padding: const EdgeInsets.all(14),
 
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
 
-                      border: Border.all(
-                        color: Colors.grey.shade300,
-                      ),
+                      color: Colors.white,
+
+                      borderRadius: BorderRadius.circular(20),
+
+                      boxShadow: const [
+
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
                     ),
 
                     child: Row(
+
                       children: [
 
                         // 图片区域
                         Container(
-                          width: 80,
-                          height: 80,
+
+                          width: 85,
+                          height: 85,
 
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(10),
+
+                            color: const Color(0xfff5f5f5),
+
+                            borderRadius:
+                            BorderRadius.circular(15),
                           ),
 
                           child: Icon(
                             item["image"],
-                            size: 40,
-                            color: Colors.white,
+                            size: 42,
+                            color: Colors.orange,
                           ),
                         ),
 
@@ -164,7 +215,9 @@ class _MenuPageState extends State<MenuPage> {
 
                         // 菜品信息
                         Expanded(
+
                           child: Column(
+
                             crossAxisAlignment:
                             CrossAxisAlignment.start,
 
@@ -173,19 +226,36 @@ class _MenuPageState extends State<MenuPage> {
                               Text(
                                 item["name"],
                                 style: const TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+
+                              const SizedBox(height: 10),
+
+                              Text(
+                                item["price"],
+                                style: const TextStyle(
+                                  color: Colors.orange,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
 
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
 
-                              Text(
-                                item["price"],
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                ),
+                              // 标签
+                              Row(
+
+                                children: [
+
+                                  tagWidget("人气"),
+
+                                  const SizedBox(width: 8),
+
+                                  tagWidget("推荐"),
+                                ],
                               ),
                             ],
                           ),
@@ -193,15 +263,28 @@ class _MenuPageState extends State<MenuPage> {
 
                         // 添加按钮
                         Container(
-                          width: 40,
-                          height: 40,
+
+                          width: 45,
+                          height: 45,
 
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade700,
-                            borderRadius: BorderRadius.circular(10),
+
+                            color: Colors.orange,
+
+                            borderRadius:
+                            BorderRadius.circular(15),
+
+                            boxShadow: [
+
+                              BoxShadow(
+                                color: Colors.orange.shade100,
+                                blurRadius: 8,
+                              ),
+                            ],
                           ),
 
                           child: IconButton(
+
                             icon: const Icon(
                               Icons.add,
                               color: Colors.white,
@@ -213,15 +296,22 @@ class _MenuPageState extends State<MenuPage> {
                                   .showSnackBar(
 
                                 SnackBar(
+
+                                  backgroundColor:
+                                  Colors.deepPurple,
+
+                                  behavior:
+                                  SnackBarBehavior.floating,
+
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                    BorderRadius.circular(15),
+                                  ),
+
                                   content: Text(
                                     '${item["name"]} 已加入购物车',
                                   ),
                                 ),
-                              );
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const DetailPage(productId:'牛肉饭',)),
                               );
                             },
                           ),
@@ -233,6 +323,37 @@ class _MenuPageState extends State<MenuPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // 标签组件
+  Widget tagWidget(String text) {
+
+    return Container(
+
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 5,
+      ),
+
+      decoration: BoxDecoration(
+
+        color: Colors.orange.shade50,
+
+        borderRadius: BorderRadius.circular(8),
+
+        border: Border.all(
+          color: Colors.orange.shade200,
+        ),
+      ),
+
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.orange.shade700,
+          fontSize: 12,
         ),
       ),
     );
