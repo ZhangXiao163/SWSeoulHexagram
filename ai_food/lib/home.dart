@@ -422,7 +422,7 @@ class _CategorySectionState extends State<CategorySection>
       StrConfig.of(context).westernFood,
       StrConfig.of(context).krFood,
       StrConfig.of(context).thaiFood,
-      StrConfig.of(context).vitFood,
+      // StrConfig.of(context).vitFood,
     ];
 
     return Row(
