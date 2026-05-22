@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'order_complete.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -80,7 +82,10 @@ class OrderConfirmPage extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const OrderCompletePage()),
+                  );
                 },
                 child: const Text(
                   "提交订单",

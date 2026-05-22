@@ -1,3 +1,4 @@
+import 'package:ai_food/detail_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -291,7 +292,10 @@ class _MenuPageState extends State<MenuPage> {
                             ),
 
                             onPressed: () {
-
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => const DetailPage(productId: "牛肉盖饭")),
+                              );
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(
 
