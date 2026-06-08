@@ -7,14 +7,12 @@ import 'package:http/http.dart' as http;
 
 import 'AiCartPage.dart';
 import 'ai/gemini_service.dart';
+import 'service/api_service.dart';
 import 'bean/DishDetailModel.dart';
 import 'config/StrConfig.dart';
 
 class DetailPage extends StatefulWidget {
-  /// 真实场景传入商品 id，页面内自己请求；
-  /// 现阶段直接传 mock 数据方便调试。
   final DishDetailModel? dish;
-
   final String productId;
 
   const DetailPage({
@@ -22,7 +20,6 @@ class DetailPage extends StatefulWidget {
     this.dish,
     required this.productId,
   });
-
 
   @override
   State<DetailPage> createState() => _DetailPageState();
@@ -38,40 +35,40 @@ class _DetailPageState extends State<DetailPage> {
   @override
   void initState() {
     super.initState();
-    _dish = widget.dish ?? _mockDetail;
-    _loading = false;
+    _loadDetail();
+  }
+
+  static const _fallbackDish = DishDetailModel(
+    id: '1', name: '불고기 덮밥', nameZh: '牛肉盖饭',
+    imageUrl: 'assets/images/banner1.jpg', price: 8000, currency: '₩',
+    description: '精选牛肉以传统酱汁腌制，搭配米饭，层次丰富，口感细腻。',
+    tags: ['月售 1000+', '招牌', '不辣'], reviews: [],
+  );
+
+  Future<void> _loadDetail() async {
+    _dish = widget.dish ?? _fallbackDish;
+    try {
+      final foodData = await ApiService().getFoodById(int.tryParse(widget.productId) ?? 1);
+      if (foodData.isNotEmpty && mounted) {
+        setState(() {
+          _dish = DishDetailModel(
+            id: (foodData['foodId'] ?? '1').toString(),
+            name: foodData['foodName'] as String? ?? _fallbackDish.name,
+            nameZh: '',
+            imageUrl: 'assets/images/banner1.jpg',
+            price: (foodData['price'] as num?)?.toDouble() ?? _fallbackDish.price,
+            currency: '₩',
+            description: foodData['foodDesc'] as String? ?? _fallbackDish.description,
+            tags: ['月售500+', '招牌'],
+            reviews: [],
+          );
+        });
+      }
+    } catch (_) {}
+    setState(() => _loading = false);
 
     _generateReviews(_dish).then((reviews) {
-      if (mounted) {
-        setState(() {
-        _reviews = reviews;
-        _reviewLoading = false;
-      });
-      }
-    });
-  }
-  // ── Mock 数据（对接接口时替换） ────────────────────────────
-  static const _mockDetail = DishDetailModel(
-    id: '1',
-    name: '불고기 덮밥',
-    nameZh: '牛肉盖饭',
-    imageUrl: 'assets/images/banner1.jpg',
-    price: 8000,
-    currency: '₩',
-    description: '精选牛肉以传统酱汁腌制，搭配米饭，层次丰富，口感细腻。午市限量供应，每日新鲜制作。',
-    tags: ['月售 1000+', '招牌', '不辣'],
-    reviews: [
-      ReviewModel(name: '小王', content: '肉质非常嫩，酱汁的甜咸比例恰到好处！', rating: 5),
-      ReviewModel(name: '小张', content: '分量很足，性价比高，下次还会来。', rating: 4),
-      ReviewModel(name: '小李', content: '外卖包装很好，到手还是热的，推荐！', rating: 5),
-    ],
-  );
-  /// 模拟接口请求；对接真实接口时替换这里即可
-  Future<void> _loadDetail() async {
-    await Future.delayed(const Duration(milliseconds: 600));
-    setState(() {
-      _dish = widget.dish ?? _mockDetail;
-      _loading = false;
+      if (mounted) setState(() {_reviews = reviews; _reviewLoading = false;});
     });
   }
 
@@ -186,20 +183,8 @@ class _DetailPageState extends State<DetailPage> {
                       child: SizedBox(
                         height: 280,
                         width: double.infinity,
-                        child: _dish.imageUrl.startsWith('assets/')
-                            ? Image.asset(
-                          _dish.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: const Color(0xFFFAC775),
-                            child: const Center(
-                              child: Text('🍲',
-                                  style: TextStyle(fontSize: 72)),
-                            ),
-                          ),
-                        )
-                            : Image.network(
-                          _dish.imageUrl,
+                        child: Image.network(
+                          'https://ai-food-images.s3.ap-northeast-2.amazonaws.com/food/${_dish.id}.jpg',
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: const Color(0xFFFAC775),
@@ -446,36 +431,6 @@ class _DetailPageState extends State<DetailPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── 顶部图片组件 ───────────────────────────────────────────
-class _HeroImage extends StatelessWidget {
-  final String imageUrl;
-  const _HeroImage({required this.imageUrl});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFFAC775),
-      child: imageUrl.startsWith('assets/')
-          ? Image.asset(
-        imageUrl,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        errorBuilder: (_, __, ___) => const Center(
-          child: Text('🍲', style: TextStyle(fontSize: 80)),
-        ),
-      )
-          : Image.network(
-        imageUrl,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        errorBuilder: (_, __, ___) => const Center(
-          child: Text('🍲', style: TextStyle(fontSize: 80)),
-        ),
       ),
     );
   }
