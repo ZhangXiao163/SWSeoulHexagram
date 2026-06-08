@@ -28,7 +28,9 @@ class OrderConfirmPage extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.maybePop(context);
+            },
         ),
         title: const Text(
           "确认订单",

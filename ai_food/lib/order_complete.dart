@@ -44,7 +44,9 @@ class OrderCompletePage extends StatelessWidget {
             color: Colors.black,
           ),
 
-          onPressed: () {},
+          onPressed: () {
+            Navigator.maybePop(context);
+          },
         ),
 
         title: const Text(
