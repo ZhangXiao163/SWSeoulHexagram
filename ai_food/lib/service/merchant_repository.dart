@@ -1,176 +1,79 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mysql_client/mysql_client.dart'; // 引入新版依赖库
 
-import '../bean/MerchantModel.dart';
+import '../bean/MerchantModel.dart'; // 引入你的商户模型
 
 class MerchantRepository {
-  Future<List<MerchantModel>> fetchNearbyMerchants(Locale locale) async {
-    await Future.delayed(const Duration(milliseconds: 800));
-    return locale.languageCode == 'ko' ? _mockDataKo : _mockDataZh;
-  }
-  static const List<MerchantModel> _mockDataZh = [
-    MerchantModel(
-      id: '1',
-      name: '奈雪的茶 (北京新地佰店)',
-      imageUrl: 'assets/images/banner1.jpg',
-      rating: 4.8,
-      deliveryTime: '25分钟',
-      tags: ['月售1000+', '起送¥20', '免配送费'],
-    ),
-    MerchantModel(
-      id: '2',
-      name: '麦当劳 (望京 SOHO 店)',
-      imageUrl: 'assets/images/banner2.jpg',
-      rating: 4.6,
-      deliveryTime: '20分钟',
-      tags: ['月售5000+', '起送¥15', '免配送费'],
-    ),
-    MerchantModel(
-      id: '3',
-      name: '喜茶 (三里屯店)',
-      imageUrl: 'assets/images/banner3.jpg',
-      rating: 4.9,
-      deliveryTime: '30分钟',
-      tags: ['月售800+', '起送¥30'],
-    ),
-    MerchantModel(
-      id: '4',
-      name: '海底捞火锅 (外卖专线)',
-      imageUrl: 'assets/images/banner4.jpg',
-      rating: 4.7,
-      deliveryTime: '40分钟',
-      tags: ['月售2000+', '起送¥50', '免配送费'],
-    ),
-    MerchantModel(
-      id: '5',
-      name: '肯德基 (朝阳门店)',
-      imageUrl: 'assets/images/banner1.jpg',
-      rating: 4.5,
-      deliveryTime: '18分钟',
-      tags: ['月售3000+', '起送¥15', '免配送费'],
-    ),
-    MerchantModel(
-      id: '6',
-      name: '必胜客 (东直门店)',
-      imageUrl: 'assets/images/banner2.jpg',
-      rating: 4.4,
-      deliveryTime: '35分钟',
-      tags: ['月售600+', '起送¥40'],
-    ),
-    MerchantModel(
-      id: '7',
-      name: '瑞幸咖啡 (国贸店)',
-      imageUrl: 'assets/images/banner3.jpg',
-      rating: 4.3,
-      deliveryTime: '15分钟',
-      tags: ['月售4000+', '免起送费', '免配送费'],
-    ),
-    MerchantModel(
-      id: '8',
-      name: '星巴克 (建国门外大街)',
-      imageUrl: 'assets/images/banner4.jpg',
-      rating: 4.6,
-      deliveryTime: '22分钟',
-      tags: ['月售1200+', '起送¥30'],
-    ),
-    MerchantModel(
-      id: '9',
-      name: '杨国福麻辣烫 (团结湖店)',
-      imageUrl: 'assets/images/banner1.jpg',
-      rating: 4.2,
-      deliveryTime: '28分钟',
-      tags: ['月售900+', '起送¥15', '免配送费'],
-    ),
-    MerchantModel(
-      id: '10',
-      name: '沙县小吃 (劲松店)',
-      imageUrl: 'assets/images/banner2.jpg',
-      rating: 4.1,
-      deliveryTime: '20分钟',
-      tags: ['月售500+', '起送¥10', '免配送费'],
-    ),
-  ];
 
-  static const List<MerchantModel> _mockDataKo = [
-    MerchantModel(
-      id: '1',
-      name: '나쉐더차 (베이징 신디바이점)',
-      imageUrl: 'assets/images/banner1.jpg',
-      rating: 4.8,
-      deliveryTime: '25분',
-      tags: ['월판매 1000+', '최소주문 ¥20', '배달비 무료'],
-    ),
-    MerchantModel(
-      id: '2',
-      name: '맥도날드 (왕징 SOHO점)',
-      imageUrl: 'assets/images/banner2.jpg',
-      rating: 4.6,
-      deliveryTime: '20분',
-      tags: ['월판매 5000+', '최소주문 ¥15', '배달비 무료'],
-    ),
-    MerchantModel(
-      id: '3',
-      name: '헤이티 (싼리툰점)',
-      imageUrl: 'assets/images/banner3.jpg',
-      rating: 4.9,
-      deliveryTime: '30분',
-      tags: ['월판매 800+', '최소주문 ¥30'],
-    ),
-    MerchantModel(
-      id: '4',
-      name: '하이디라오 훠궈 (배달 전용)',
-      imageUrl: 'assets/images/banner4.jpg',
-      rating: 4.7,
-      deliveryTime: '40분',
-      tags: ['월판매 2000+', '최소주문 ¥50', '배달비 무료'],
-    ),
-    MerchantModel(
-      id: '5',
-      name: 'KFC (차오양먼점)',
-      imageUrl: 'assets/images/banner1.jpg',
-      rating: 4.5,
-      deliveryTime: '18분',
-      tags: ['월판매 3000+', '최소주문 ¥15', '배달비 무료'],
-    ),
-    MerchantModel(
-      id: '6',
-      name: '피자헛 (둥즈먼점)',
-      imageUrl: 'assets/images/banner2.jpg',
-      rating: 4.4,
-      deliveryTime: '35분',
-      tags: ['월판매 600+', '최소주문 ¥40'],
-    ),
-    MerchantModel(
-      id: '7',
-      name: '루이싱커피 (궈마오점)',
-      imageUrl: 'assets/images/banner3.jpg',
-      rating: 4.3,
-      deliveryTime: '15분',
-      tags: ['월판매 4000+', '최소주문 없음', '배달비 무료'],
-    ),
-    MerchantModel(
-      id: '8',
-      name: '스타벅스 (젠궈먼외대가점)',
-      imageUrl: 'assets/images/banner4.jpg',
-      rating: 4.6,
-      deliveryTime: '22분',
-      tags: ['월판매 1200+', '최소주문 ¥30'],
-    ),
-    MerchantModel(
-      id: '9',
-      name: '양궈푸 마라탕 (퇀제후점)',
-      imageUrl: 'assets/images/banner1.jpg',
-      rating: 4.2,
-      deliveryTime: '28분',
-      tags: ['월판매 900+', '최소주문 ¥15', '배달비 무료'],
-    ),
-    MerchantModel(
-      id: '10',
-      name: '샤현 샤오츠 (징쑹점)',
-      imageUrl: 'assets/images/banner2.jpg',
-      rating: 4.1,
-      deliveryTime: '20분',
-      tags: ['월판매 500+', '최소주문 ¥10', '배달비 무료'],
-    ),
-  ];
+  Future<List<MerchantModel>> fetchNearbyMerchants(Locale locale) async {
+    List<MerchantModel> merchants = [];
+
+    // 1. 创建数据库连接
+    final conn = await MySQLConnection.createConnection(
+      host: "127.0.0.1",
+      port: 3306,
+      userName: "root",
+      password: "123456",
+      databaseName: "ai_food", // 数据库名
+    );
+
+    try {
+      // 2. 建立连接
+      await conn.connect();
+
+      // 3. 执行 SQL 查询（使用你的真实表名 ai_food_store）
+      var results = await conn.execute("SELECT * FROM ai_food_store;");
+
+      // 4. 遍历查询到的每一行数据
+      for (var row in results.rows) {
+
+        // 🛠️ 核心修正：assoc 后面必须加上 () 才能作为方法调用！
+        final data = row.assoc();
+
+        // ✨ 安全提取基础 String 字段
+        final String merchantId = data['merchant_id'] ?? '0';
+        final String merchantName = data['merchant_name'] ?? '未知商家';
+        final String category = data['category'] ?? '';
+
+        // ✨ 类型安全转换（从 Map 提取 String? 后进行数值转型）
+        final double rating = double.tryParse(data['rating'] ?? '') ?? 0.0;
+        final double avgConsumption = double.tryParse(data['avg_consumption'] ?? '') ?? 0.0;
+        final double minDeliveryPrice = double.tryParse(data['min_delivery_price'] ?? '') ?? 0.0;
+        final double deliveryFee = double.tryParse(data['delivery_fee'] ?? '') ?? 0.0;
+        final int monthlySales = int.tryParse(data['monthly_sales'] ?? '') ?? 0;
+
+        // 5. 动态生成多语言原先 UI 需用的 tags 列表
+        final isKo = locale.languageCode == 'ko';
+        final minPriceText = isKo ? '최소주문 ¥$minDeliveryPrice' : '起送¥${minDeliveryPrice.toStringAsFixed(0)}';
+        final salesText = isKo ? '월판매 $monthlySales+' : '月售$monthlySales+';
+
+        final feeText = deliveryFee == 0
+            ? (isKo ? '배달비 무료' : '免配送费')
+            : (isKo ? '배달비 ¥$deliveryFee' : '配送费¥$deliveryFee');
+
+        // 6. 装配进你配置完美的 MerchantModel 实体中
+        merchants.add(MerchantModel(
+          id: merchantId,
+          name: merchantName,
+          imageUrl: 'assets/images/banner1.jpg', // 默认资产图片
+          rating: rating,
+          deliveryTime: isKo ? '25분' : '25分钟',  // 默认配送时间
+          tags: [salesText, minPriceText, feeText], // 标签组合
+          category: category,
+          avgConsumption: avgConsumption,
+          minDeliveryPrice: minDeliveryPrice,
+          deliveryFee: deliveryFee,
+          monthlySales: monthlySales,
+        ));
+      }
+    } catch (e) {
+      print('❌ 数据库读取或解析失败: $e');
+    } finally {
+      // 7. 关闭连接释放资源
+      await conn.close();
+    }
+
+    return merchants;
+  }
 }

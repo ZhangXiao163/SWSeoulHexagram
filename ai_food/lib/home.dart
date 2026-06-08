@@ -14,6 +14,7 @@ import 'bean/MerchantModel.dart';
 import 'config/StrConfig.dart';
 import 'menu_page.dart';
 
+
 // 1. 定义全局变量
 ValueNotifier<Locale> appLocale = ValueNotifier(const Locale('zh'));
 
@@ -424,6 +425,7 @@ class _CategorySectionState extends State<CategorySection>
       StrConfig.of(context).thaiFood,
       // StrConfig.of(context).vitFood,
     ];
+
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,

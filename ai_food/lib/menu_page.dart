@@ -1,24 +1,7 @@
-import 'package:ai_food/detail_page.dart';
 import 'package:flutter/material.dart';
+import 'service/menu_repository.dart';
+import 'detail_page.dart'; // 1. ✨ 引入你的菜品详情页文件
 
-void main() {
-  runApp(const MyApp());
-}
-
-// 主应用
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: MenuPage(),
-    );
-  }
-}
-
-// 菜单页面
 class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
 
@@ -27,339 +10,374 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
+  final MenuRepository _repository = MenuRepository();
 
-  // 菜单数据
-  final List<Map<String, dynamic>> menuList = [
-    {
-      "name": "韩式牛肉",
-      "price": "¥ 8,000",
-      "image": Icons.ramen_dining,
-    },
-    {
-      "name": "炸猪排",
-      "price": "¥ 7,000",
-      "image": Icons.lunch_dining,
-    },
-    {
-      "name": "冷面",
-      "price": "¥ 6,500",
-      "image": Icons.restaurant,
-    },
-  ];
+  Locale _currentLocale = const Locale('zh'); // 默认中文
+  final List<String> _categories = ['主食', '饮品', '小吃', '甜品', '加料'];
+
+  int _selectedCategoryIndex = 0;
+  final ScrollController _rightScrollController = ScrollController();
+
+  // 核心数据源
+  MerchantDetailModel? _merchantDetail;
+  Map<String, List<MenuItemModel>> _groupedMenu = {};
+  final List<double> _sectionPositions = [];
+  bool _isLoaded = false;
+  bool _isLeftClickScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAllPageData();
+    _rightScrollController.addListener(_onRightScroll);
+  }
+
+  /// 统一捞取头部商家信息与菜品列表
+  void _loadAllPageData() async {
+    setState(() => _isLoaded = false);
+
+    // 异步请求
+    final detail = await _repository.fetchMerchantDetail(_currentLocale);
+    final allItems = await _repository.fetchMenuItems(_currentLocale);
+
+    // 初始化分组
+    Map<String, List<MenuItemModel>> tempGroup = { for (var cat in _categories) cat : [] };
+    for (var item in allItems) {
+      if (tempGroup.containsKey(item.category)) {
+        tempGroup[item.category]!.add(item);
+      }
+    }
+
+    // 预计算右侧每个分类区块的高度
+    _sectionPositions.clear();
+    double currentHeight = 0.0;
+    _sectionPositions.add(currentHeight);
+
+    for (var cat in _categories) {
+      int itemCount = tempGroup[cat]?.length ?? 0;
+      currentHeight += 40.0 + (itemCount * 110.0); // 标题40px + 菜品每行110px
+      _sectionPositions.add(currentHeight);
+    }
+
+    setState(() {
+      _merchantDetail = detail;
+      _groupedMenu = tempGroup;
+      _isLoaded = true;
+    });
+  }
+
+  void _onRightScroll() {
+    if (_isLeftClickScrolling) return;
+    double offset = _rightScrollController.offset;
+    for (int i = 0; i < _categories.length; i++) {
+      if (offset >= _sectionPositions[i] && offset < _sectionPositions[i + 1]) {
+        if (_selectedCategoryIndex != i) {
+          setState(() {
+            _selectedCategoryIndex = i;
+          });
+        }
+        break;
+      }
+    }
+  }
+
+  void _scrollToSection(int index) async {
+    _isLeftClickScrolling = true;
+    setState(() {
+      _selectedCategoryIndex = index;
+    });
+    await _rightScrollController.animateTo(
+      _sectionPositions[index],
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+    );
+    _isLeftClickScrolling = false;
+  }
+
+  @override
+  void dispose() {
+    _rightScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isKo = _currentLocale.languageCode == 'ko';
+
+    String getCategoryDisplay(String cat) {
+      if (!isKo) return cat;
+      switch(cat) {
+        case '主食': return '주식';
+        case '饮品': return '음료';
+        case '小吃': return '스낵';
+        case '甜品': return '디저트';
+        case '加料': return '토핑';
+        default: return cat;
+      }
+    }
 
     return Scaffold(
-
-      // 页面背景颜色
-      backgroundColor: const Color(0xfff7f2fa),
-
-      // 顶部导航栏
+      backgroundColor: Colors.white,
+      // 1. 深紫色背景的经典顶部导航栏
       appBar: AppBar(
-
-        backgroundColor: const Color(0xffd7c1ff),
-
+        backgroundColor: Colors.deepPurple,
         elevation: 0,
-
-        // 返回按钮
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.deepPurple,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          onPressed: () => Navigator.maybePop(context),
         ),
-
-        // 标题
-        title: const Text(
-          '菜单',
-          style: TextStyle(
-            color: Colors.deepPurple,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
-
-        centerTitle: true,
-
-        // 收藏按钮
         actions: [
-
-          IconButton(
-            icon: const Icon(
-              Icons.favorite_border,
-              color: Colors.deepPurple,
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: TextButton.icon(
+              icon: const Icon(Icons.language, color: Colors.white, size: 18),
+              label: Text(
+                isKo ? '한글' : '中文',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () {
+                setState(() {
+                  _currentLocale = isKo ? const Locale('zh') : const Locale('ko');
+                  _loadAllPageData();
+                });
+              },
             ),
-            onPressed: () {},
-          ),
+          )
         ],
       ),
-
-      body: Padding(
-
-        padding: const EdgeInsets.all(16),
-
-        child: Column(
-
-          children: [
-
-            // 搜索框
-            TextField(
-
-              decoration: InputDecoration(
-
-                hintText: '搜索菜单',
-
-                hintStyle: TextStyle(
-                  color: Colors.grey.shade500,
-                ),
-
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: Colors.grey,
-                ),
-
-                filled: true,
-
-                fillColor: Colors.white,
-
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 15,
-                ),
-
-                enabledBorder: OutlineInputBorder(
-
-                  borderRadius: BorderRadius.circular(30),
-
-                  borderSide: const BorderSide(
-                    color: Colors.amber,
-                    width: 2,
+      body: !_isLoaded || _merchantDetail == null
+          ? const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple)))
+          : Column(
+        children: [
+          // 2. 店铺名片区域
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    _merchantDetail!.logo,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
                   ),
                 ),
-
-                focusedBorder: OutlineInputBorder(
-
-                  borderRadius: BorderRadius.circular(30),
-
-                  borderSide: const BorderSide(
-                    color: Colors.orange,
-                    width: 2,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _merchantDetail!.name,
+                        style: const TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            '${isKo ? '별점' : '评分'} ${_merchantDetail!.rating}',
+                            style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                          ),
+                          _buildDivider(),
+                          Text(
+                            '${isKo ? '월판매' : '月售'} ${_merchantDetail!.monthlySales}+',
+                            style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                          ),
+                          _buildDivider(),
+                          Text(
+                            isKo ? '약 ${_merchantDetail!.deliveryTime}분' : '约 ${_merchantDetail!.deliveryTime}分钟',
+                            style: const TextStyle(fontSize: 13, color: Colors.black54, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ),
+              ],
             ),
+          ),
 
-            const SizedBox(height: 24),
+          // 分割线
+          Container(height: 1, color: Colors.grey.shade100),
 
-            // 菜单列表
-            Expanded(
-
-              child: ListView.builder(
-
-                itemCount: menuList.length,
-
-                itemBuilder: (context, index) {
-
-                  final item = menuList[index];
-
-                  return Container(
-
-                    margin: const EdgeInsets.only(bottom: 18),
-
-                    padding: const EdgeInsets.all(14),
-
-                    decoration: BoxDecoration(
-
-                      color: Colors.white,
-
-                      borderRadius: BorderRadius.circular(20),
-
-                      boxShadow: const [
-
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-
-                    child: Row(
-
-                      children: [
-
-                        // 图片区域
-                        Container(
-
-                          width: 85,
-                          height: 85,
-
+          // 3. 点菜主区域
+          Expanded(
+            child: Row(
+              children: [
+                // 左侧：多分类侧边栏
+                Container(
+                  width: 90,
+                  color: Colors.grey.shade50,
+                  child: ListView.builder(
+                    itemCount: _categories.length,
+                    itemBuilder: (context, index) {
+                      bool isSelected = index == _selectedCategoryIndex;
+                      return GestureDetector(
+                        onTap: () => _scrollToSection(index),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
                           decoration: BoxDecoration(
-
-                            color: const Color(0xfff5f5f5),
-
-                            borderRadius:
-                            BorderRadius.circular(15),
+                            color: isSelected ? Colors.white : Colors.transparent,
+                            border: isSelected
+                                ? const Border(left: BorderSide(color: Colors.deepPurple, width: 4))
+                                : null,
                           ),
-
-                          child: Icon(
-                            item["image"],
-                            size: 42,
-                            color: Colors.orange,
-                          ),
-                        ),
-
-                        const SizedBox(width: 16),
-
-                        // 菜品信息
-                        Expanded(
-
-                          child: Column(
-
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
-
-                            children: [
-
-                              Text(
-                                item["name"],
-                                style: const TextStyle(
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-
-                              const SizedBox(height: 10),
-
-                              Text(
-                                item["price"],
-                                style: const TextStyle(
-                                  color: Colors.orange,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-
-                              const SizedBox(height: 10),
-
-                              // 标签
-                              Row(
-
-                                children: [
-
-                                  tagWidget("人气"),
-
-                                  const SizedBox(width: 8),
-
-                                  tagWidget("推荐"),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // 添加按钮
-                        Container(
-
-                          width: 45,
-                          height: 45,
-
-                          decoration: BoxDecoration(
-
-                            color: Colors.orange,
-
-                            borderRadius:
-                            BorderRadius.circular(15),
-
-                            boxShadow: [
-
-                              BoxShadow(
-                                color: Colors.orange.shade100,
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-
-                          child: IconButton(
-
-                            icon: const Icon(
-                              Icons.add,
-                              color: Colors.white,
+                          child: Text(
+                            getCategoryDisplay(_categories[index]),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
                             ),
-
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const DetailPage(productId: "牛肉盖饭")),
-                              );
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(
-
-                                SnackBar(
-
-                                  backgroundColor:
-                                  Colors.deepPurple,
-
-                                  behavior:
-                                  SnackBarBehavior.floating,
-
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                    BorderRadius.circular(15),
-                                  ),
-
-                                  content: Text(
-                                    '${item["name"]} 已加入购物车',
-                                  ),
-                                ),
-                              );
-                            },
                           ),
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                      );
+                    },
+                  ),
+                ),
+
+                // 右侧：联动菜品详情列表
+                Expanded(
+                  child: ListView.builder(
+                    controller: _rightScrollController,
+                    itemCount: _categories.length,
+                    itemBuilder: (context, catIndex) {
+                      String category = _categories[catIndex];
+                      List<MenuItemModel> items = _groupedMenu[category] ?? [];
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 40,
+                            width: double.infinity,
+                            color: Colors.grey.shade50,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              getCategoryDisplay(category),
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey.shade500),
+                            ),
+                          ),
+                          ...items.map((item) {
+                            // 2. ✨ 将整个菜品卡片用 GestureDetector 包裹，实现点击跳转
+                            return GestureDetector(
+                              behavior: HitTestBehavior.opaque, // 让空白区域点击也有效
+                              onTap: () {
+                                // 跳转到详情页并传递当前点击商品的 id
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetailPage(
+                                      productId: item.id, // 对应传入详情页必需的 productId
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                height: 110,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border(bottom: BorderSide(color: Colors.grey.shade100, width: 1)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    // 菜品图片
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.asset(
+                                        item.image,
+                                        width: 86,
+                                        height: 86,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (c, e, s) => Container(
+                                          width: 86, height: 86, color: Colors.grey.shade100,
+                                          child: const Icon(Icons.fastfood, color: Colors.grey),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    // 菜品信息
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            item.name,
+                                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                '₩${item.price.toStringAsFixed(0)}',
+                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                                              ),
+                                              // 加购按钮 (用 GestureDetector 独立拦截点击事件，防止触发外层的页面跳转)
+                                              GestureDetector(
+                                                onTap: () {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      backgroundColor: Colors.deepPurple,
+                                                      behavior: SnackBarBehavior.floating,
+                                                      content: Text('${item.name} ${isKo ? '장바구니에 담겼습니다' : '已加入购物车'}'),
+                                                    ),
+                                                  );
+                                                },
+                                                child: Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.deepPurple,
+                                                    borderRadius: BorderRadius.circular(14),
+                                                  ),
+                                                  child: Text(
+                                                    isKo ? '담기' : '加购',
+                                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                                  ),
+                                                ),
+                                              )
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  // 标签组件
-  Widget tagWidget(String text) {
-
+  Widget _buildDivider() {
     return Container(
-
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 5,
-      ),
-
-      decoration: BoxDecoration(
-
-        color: Colors.orange.shade50,
-
-        borderRadius: BorderRadius.circular(8),
-
-        border: Border.all(
-          color: Colors.orange.shade200,
-        ),
-      ),
-
-      child: Text(
-        text,
-        style: TextStyle(
-          color: Colors.orange.shade700,
-          fontSize: 12,
-        ),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      height: 10,
+      width: 1,
+      color: Colors.grey.shade300,
     );
   }
 }
