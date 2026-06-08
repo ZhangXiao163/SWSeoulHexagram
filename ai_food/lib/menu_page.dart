@@ -115,7 +115,7 @@ class _MenuPageState extends State<MenuPage> {
                                     child: SizedBox(
                                       width: 85, height: 85,
                                       child: Image.network(
-                                        'https://ai-food-images.s3.ap-northeast-2.amazonaws.com/food/$foodId.jpg',
+                                        'https://ai-food-images-seoul.s3.ap-northeast-2.amazonaws.com/food/$foodId.jpg',
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) => Container(
                                           color: const Color(0xfff5f5f5),

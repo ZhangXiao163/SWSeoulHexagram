@@ -184,7 +184,7 @@ class _DetailPageState extends State<DetailPage> {
                         height: 280,
                         width: double.infinity,
                         child: Image.network(
-                          'https://ai-food-images.s3.ap-northeast-2.amazonaws.com/food/${_dish.id}.jpg',
+                          'https://ai-food-images-seoul.s3.ap-northeast-2.amazonaws.com/food/${_dish.id}.jpg',
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: const Color(0xFFFAC775),
