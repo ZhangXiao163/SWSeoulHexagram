@@ -389,13 +389,10 @@ class _CategorySectionState extends State<CategorySection>
   final List<String> _icons = [
     "assets/images/chinese_food.png",
     "assets/images/korean_food.png",
-<<<<<<< HEAD
+
     "assets/images/dessert.png",
     "assets/images/pho_food.png",
-=======
-    "assets/images/western_food.png",
-    "assets/images/thai_food.png",
->>>>>>> 8f2bfa01437f772b99c32f245ecd37c2820141c5
+
   ];
 
   late List<AnimationController> _controllers;
@@ -456,10 +453,7 @@ class _CategorySectionState extends State<CategorySection>
       StrConfig.of(context).krFood,
       StrConfig.of(context).westernFood,
       StrConfig.of(context).thaiFood,
-<<<<<<< HEAD
-      // StrConfig.of(context).vitFood,
-=======
->>>>>>> 8f2bfa01437f772b99c32f245ecd37c2820141c5
+
     ];
 
     final sel = widget.selectedIndex;
