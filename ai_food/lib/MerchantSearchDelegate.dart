@@ -2,6 +2,8 @@ import 'package:ai_food/service/merchant_repository.dart';
 import 'package:flutter/material.dart';
 
 import 'bean/MerchantModel.dart';
+import 'config/StrConfig.dart';
+import 'menu_page.dart';
 
 
 class MerchantSearchDelegate extends SearchDelegate {
@@ -34,7 +36,7 @@ class MerchantSearchDelegate extends SearchDelegate {
   @override
   Widget buildSuggestions(BuildContext context) {
     if (query.isEmpty) {
-      return const Center(child: Text('请输入商家名称'));
+      return Center(child: Text( StrConfig.of(context).inputName));
     }
     return _buildList(context);
   }
@@ -52,7 +54,9 @@ class MerchantSearchDelegate extends SearchDelegate {
         }
         final list = snapshot.data ?? [];
         if (list.isEmpty) {
-          return Center(child: Text('未找到"$query"相关商家'));
+          return Center(
+            child: Text("${StrConfig.of(context).proNotFound} $query"),
+          );
         }
         return ListView.separated(
           itemCount: list.length,
@@ -81,7 +85,11 @@ class MerchantSearchDelegate extends SearchDelegate {
               ),
               onTap: () {
                 close(context, merchant); // 关闭搜索，把选中商家回传
-                // TODO: Navigator.push 到商家详情页
+                //  跳转商家详情页
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MenuPage()),
+                );
               },
             );
           },

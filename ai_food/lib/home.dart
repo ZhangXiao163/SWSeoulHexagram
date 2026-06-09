@@ -360,7 +360,7 @@ class _CategorySectionState extends State<CategorySection>
     "assets/images/chinese_food.png",
     "assets/images/western_food.png",
     "assets/images/korean_food.png",
-    "assets/images/thai_food.png",
+    "assets/images/dessert.png",
     "assets/images/pho_food.png",
   ];
 
@@ -422,7 +422,7 @@ class _CategorySectionState extends State<CategorySection>
       StrConfig.of(context).westernFood,
       StrConfig.of(context).krFood,
       StrConfig.of(context).thaiFood,
-      StrConfig.of(context).vitFood,
+      // StrConfig.of(context).vitFood,
     ];
 
     return Row(

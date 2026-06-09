@@ -15,12 +15,14 @@ class StrConfig {
       'kr_food': '韩餐',
       'vit_food': '越南菜',
       'thai_food': '泰国菜',
+      'dessert_food': '甜品',
       'takeout': '外卖',
       'mine': '我的',
       'order': '订单',
       'car': '购物车',
       'my_order': '我的订单',
-
+      'input_name': '请输入商户名称',
+      'pro_not_found': '未找到',
       // 顶部标题栏
       'ai_helper_title': 'AI 食物助手',
       'ai_helper_subtitle': '告诉我你想吃什么 ✨',
@@ -65,6 +67,7 @@ class StrConfig {
       'kr_food': '한식',
       'vit_food': '베트남 요리',
       'thai_food': '태국 요리',
+      'dessert_food': '디저트',
       'takeout': '배달',
       'mine': '마이페이지',
       'order': '주문내역',
@@ -72,7 +75,8 @@ class StrConfig {
       // 顶部标题栏
       'ai_helper_title': 'AI 푸드 헬퍼',
       'ai_helper_subtitle': '먹고 싶은 메뉴를 알려주세요 ✨',
-
+      'input_name': '판매자 이름을 입력해 주세요.',
+      'pro_not_found': '찾을 수 없음',
       // 趋势卡片
       'trending_title': '오늘의 맛집 트렌드',
       'trending_update': '실시간 업데이트 · 한국 인기 배달 메뉴',
@@ -155,6 +159,9 @@ class StrConfig {
   String get buyCar => _data[locale.languageCode]!['car']!;
   String get myOrder => _data[locale.languageCode]!['my_order']!;
   String get buyAgain => _data[locale.languageCode]!['buy_again']!;
+  String get dessertFood => _data[locale.languageCode]!['dessert_food']!;
+  String get inputName => _data[locale.languageCode]!['input_name']!;
+  String get proNotFound => _data[locale.languageCode]!['pro_not_found']!;
   static StrConfig of(BuildContext context) {
     return StrConfig(Localizations.localeOf(context));
   }
