@@ -473,7 +473,7 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
                     AiTrendListView(
                       trends: _trends,
                       onTrendTap: (name) =>
-                          _send("我想了解更多关于 $name 的信息"),
+                          _send("I want to know more about $name "),
                     ),
 
                 const SizedBox(height: 12),
@@ -700,7 +700,7 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
       ),
       child: Center(
         child: Text(
-          isAi ? '🤖' : '我',
+          isAi ? '🤖' : 'ME',
           style: TextStyle(
             fontSize: isAi ? 14 : 11,
             color: isAi ? Colors.white : Colors.black87,

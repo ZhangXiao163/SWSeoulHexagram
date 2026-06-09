@@ -88,7 +88,12 @@ class MerchantSearchDelegate extends SearchDelegate {
                 //  跳转商家详情页
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MenuPage()),
+                  MaterialPageRoute(
+                    builder: (context) => MenuPage(
+                      merchantId: int.tryParse(merchant.id) ?? 1,
+                      merchantName: merchant.name,
+                    ),
+                  ),
                 );
               },
             );

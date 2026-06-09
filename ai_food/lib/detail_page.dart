@@ -26,7 +26,7 @@ class DetailPage extends StatefulWidget {
 }
 
 class _DetailPageState extends State<DetailPage> {
-  late DishDetailModel _dish;
+  DishDetailModel? _dish;
   int _qty = 1;
   bool _loading = true;
   List<ReviewModel> _reviews = [];
@@ -35,44 +35,118 @@ class _DetailPageState extends State<DetailPage> {
   @override
   void initState() {
     super.initState();
+
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle.dark,
+    );
+
     _loadDetail();
   }
 
-  static const _fallbackDish = DishDetailModel(
-    id: '1', name: '불고기 덮밥', nameZh: '牛肉盖饭',
-    imageUrl: 'assets/images/banner1.jpg', price: 8000, currency: '₩',
-    description: '精选牛肉以传统酱汁腌制，搭配米饭，层次丰富，口感细腻。',
-    tags: ['月售 1000+', '招牌', '不辣'], reviews: [],
-  );
 
   Future<void> _loadDetail() async {
-    _dish = widget.dish ?? _fallbackDish;
     try {
-      final foodData = await ApiService().getFoodById(int.tryParse(widget.productId) ?? 1);
+      final foodData = await ApiService().getFoodById(
+        int.tryParse(widget.productId) ?? 1,
+      );
+      debugPrint('_loadDetail:');
       if (foodData.isNotEmpty && mounted) {
+        debugPrint('isNotEmpty:');
+        final dish = DishDetailModel(
+          id: (foodData['foodId'] ?? '1').toString(),
+          name: foodData['foodName'] as String? ?? '',
+          nameZh: '',
+          imageUrl: 'assets/images/banner1.jpg',
+          price: (foodData['price'] as num?)?.toDouble() ?? 0,
+          currency: '₩',
+          description: '',
+          tags: [StrConfig.of(context).detailTag],
+          reviews: [],
+        );
+        debugPrint('setState:');
         setState(() {
-          _dish = DishDetailModel(
-            id: (foodData['foodId'] ?? '1').toString(),
-            name: foodData['foodName'] as String? ?? _fallbackDish.name,
-            nameZh: '',
-            imageUrl: 'assets/images/banner1.jpg',
-            price: (foodData['price'] as num?)?.toDouble() ?? _fallbackDish.price,
-            currency: '₩',
-            description: foodData['foodDesc'] as String? ?? _fallbackDish.description,
-            tags: ['月售500+', '招牌'],
-            reviews: [],
-          );
+          _dish = dish;
         });
+
+        final desc = await _generateDescription(dish);
+
+        if (mounted && _dish != null) {
+          debugPrint('mounted:');
+          setState(() {
+            _dish = _dish!.copyWith(
+              description: desc,
+            );
+          });
+        }
+        debugPrint('_dish:');
+        if (_dish != null) {
+          final generatedReviews = await _generateReviews(_dish!);
+
+          if (mounted) {
+            setState(() {
+              _reviews = generatedReviews;
+              _reviewLoading = false;
+            });
+          }
+        }
       }
-    } catch (_) {}
-    setState(() => _loading = false);
+    } catch (e) {
+      debugPrint('加载详情失败: $e');
+    }
 
-    _generateReviews(_dish).then((reviews) {
-      if (mounted) setState(() {_reviews = reviews; _reviewLoading = false;});
-    });
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
+  Future<String> _generateDescription(DishDetailModel dish) async {
+    await Future.delayed(Duration.zero);
+    if (!mounted) return '';
 
-  double get _totalPrice => _dish.price * _qty;
+    final isKorean = Localizations.localeOf(context).languageCode == 'ko';
+    final lang = isKorean ? '韩语(Korean)' : '中文(Chinese)';
+
+    final prompt = '''
+请为以下菜品生成一段简短的描述，50字以内，口感诱人，突出特色。
+菜品名称：${dish.name}
+价格：${dish.currency}${dish.price.toStringAsFixed(0)}
+标签：${dish.tags.join('、')}
+
+要求：
+- 使用 $lang 回复
+- 只返回描述文字，不要任何其他内容
+''';
+
+    try {
+      final geminiService = GeminiService();
+      final res = await http.post(
+        Uri.parse(geminiService.geminiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'role': 'user',
+              'parts': [{'text': prompt}],
+            }
+          ],
+          'generationConfig': {
+            'temperature': 0.8,
+            'maxOutputTokens': 200,
+          },
+        }),
+      );
+
+      if (res.statusCode != 200) throw Exception('API Error');
+
+      final data = jsonDecode(res.body);
+      return data['candidates'][0]['content']['parts'][0]['text'] as String;
+    } catch (e) {
+      debugPrint('描述生成失败: $e');
+      return '';
+    }
+  }
+  double get _totalPrice => (_dish?.price ?? 0) * _qty;
 
   Future<List<ReviewModel>> _generateReviews(DishDetailModel dish) async {
     // 关键修复：确保 context 已经挂载到树上
@@ -131,10 +205,14 @@ class _DetailPageState extends State<DetailPage> {
       data['candidates'][0]['content']['parts'][0]['text'] as String;
 
       // 提取 JSON 部分，防止模型多返回了文字
-      final jsonStr = rawText.substring(
-        rawText.indexOf('['),
-        rawText.lastIndexOf(']') + 1,
-      );
+      final start = rawText.indexOf('[');
+      final end = rawText.lastIndexOf(']');
+
+      if (start == -1 || end == -1) {
+        throw Exception('Invalid JSON Response');
+      }
+
+      final jsonStr = rawText.substring(start, end + 1);
 
       final List list = jsonDecode(jsonStr);
       return list
@@ -154,11 +232,16 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
 
-    if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading || _dish == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
+
+    final DishDetailModel dish = _dish!;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -184,7 +267,7 @@ class _DetailPageState extends State<DetailPage> {
                         height: 280,
                         width: double.infinity,
                         child: Image.network(
-                          'https://ai-food-images-seoul.s3.ap-northeast-2.amazonaws.com/food/${_dish.id}.jpg',
+                          'https://ai-food-images-seoul.s3.ap-northeast-2.amazonaws.com/food/${dish.id}.jpg',
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: const Color(0xFFFAC775),
@@ -257,7 +340,7 @@ class _DetailPageState extends State<DetailPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _dish.name,
+                                    dish.name,
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
@@ -265,7 +348,7 @@ class _DetailPageState extends State<DetailPage> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    _dish.nameZh,
+                                    dish.nameZh,
                                     style: const TextStyle(
                                         fontSize: 13, color: Colors.grey),
                                   ),
@@ -273,7 +356,7 @@ class _DetailPageState extends State<DetailPage> {
                               ),
                             ),
                             Text(
-                              '${_dish.currency} ${_dish.price.toStringAsFixed(0)}',
+                              '${dish.currency} ${dish.price.toStringAsFixed(0)}',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -288,7 +371,7 @@ class _DetailPageState extends State<DetailPage> {
                         Wrap(
                           spacing: 6,
                           runSpacing: 6,
-                          children: _dish.tags
+                          children: dish.tags
                               .map((tag) => _TagChip(label: tag))
                               .toList(),
                         ),
@@ -298,7 +381,7 @@ class _DetailPageState extends State<DetailPage> {
                         const SizedBox(height: 14),
 
                         Text(
-                          _dish.description,
+                          dish.description,
                           style: const TextStyle(
                             fontSize: 13,
                             color: Colors.black54,
@@ -405,7 +488,7 @@ class _DetailPageState extends State<DetailPage> {
             child: _BottomBar(
               qty: _qty,
               totalPrice: _totalPrice,
-              currency: _dish.currency,
+              currency: dish.currency,
               onMinus: () {
                 if (_qty > 1) setState(() => _qty--);
               },
@@ -414,7 +497,7 @@ class _DetailPageState extends State<DetailPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                        '${StrConfig.of(context).addCart}, x$_qty，${StrConfig.of(context).count} ${_dish.currency}${_totalPrice.toStringAsFixed(0)}'),
+                        '${StrConfig.of(context).addCart}, x$_qty，${StrConfig.of(context).count} ${dish.currency}${_totalPrice.toStringAsFixed(0)}'),
                     duration: const Duration(seconds: 2),
                     backgroundColor: const Color(0xFFEF9F27),
                     behavior: SnackBarBehavior.floating,
@@ -506,7 +589,7 @@ class _ReviewItem extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Text(
-              review.name[0],
+              review.name.isNotEmpty ? review.name[0] : '?',
               style: TextStyle(
                 color: colors[1],
                 fontSize: 13,
@@ -671,3 +754,5 @@ class _QtyButton extends StatelessWidget {
     );
   }
 }
+
+

@@ -24,6 +24,7 @@ class StrConfig {
       'my_order': '我的订单',
       'input_name': '请输入商户名称',
       'pro_not_found': '未找到',
+      'login_overtime': '登录已过期，请重新登录...',
       // 顶部标题栏
       'ai_helper_title': 'AI 食物助手',
       'ai_helper_subtitle': '告诉我你想吃什么 ✨',
@@ -39,7 +40,7 @@ class StrConfig {
       'current_language': '中文(Chinese)', // 添加这一行
 
       'buy_again': '再次购买',
-
+      'retry': '重试',
       'login': '登录',
       //登录界面的
 
@@ -56,6 +57,7 @@ class StrConfig {
       'user_review': '用户评价',
       'count': '合计',
       'ai_working': 'AI 生成评价中...',
+      'detail_tag': '月售500+, 招牌',
 
     },
     'ko': {
@@ -109,6 +111,9 @@ class StrConfig {
       'my_order': '나의 주문서',
 
       'buy_again': '재구매',
+      'login_overtime': '로그인 시간이 만료되었습니다. 다시 로그인해 주세요...',
+       'retry': '재시도',
+      'detail_tag': '월간 판매량 500건 이상, 시그니처'
     },
   };
 
@@ -170,6 +175,10 @@ class StrConfig {
   String get dessertFood => _data[locale.languageCode]!['dessert_food']!;
   String get inputName => _data[locale.languageCode]!['input_name']!;
   String get proNotFound => _data[locale.languageCode]!['pro_not_found']!;
+  String get loginOverTime => _data[locale.languageCode]!['login_overtime']!;
+  String get retry => _data[locale.languageCode]!['retry']!;
+  String get detailTag => _data[locale.languageCode]!['detail_tag']!;
+
   static StrConfig of(BuildContext context) {
     return StrConfig(Localizations.localeOf(context));
   }

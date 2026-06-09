@@ -64,6 +64,14 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
   bool _isLoading = false;
   String? _errorMsg;
 
+  late StrConfig _strConfig;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _strConfig = StrConfig.of(context); // ✅ 安全缓存
+  }
+
   @override
   void initState() {
     super.initState();
@@ -78,7 +86,7 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
     if (!ApiService().isLoggedIn) {
       setState(() {
         _isLoading = false;
-        _errorMsg = '请先登录';
+        _errorMsg = "please login first";
         _merchants = [];
       });
       return;
@@ -93,17 +101,38 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
   }
 
   Future<void> _loadMerchants() async {
+    if (!LoginManager.instance.isLogin) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+          const LoginPage(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ).then((_) => _onLocaleChanged());
+    }
     setState(() {
       _isLoading = true;
       _errorMsg = null;
     });
     try {
-      final list = await _repository.fetchMerchantsByClass(_selectedCategory, appLocale.value);
+      final list = await _repository.fetchMerchantsByClass(
+        _selectedCategory,
+        appLocale.value,
+      );
       setState(() => _merchants = list);
     } catch (e) {
       final msg = e.toString();
       if (msg.contains('401') || msg.contains('Unauthorized')) {
-        setState(() => _errorMsg = '登录已过期，请重新登录');
+        setState(() => _errorMsg = "please login first");
       } else {
         setState(() => _errorMsg = msg);
       }
@@ -119,13 +148,14 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
   }
 
   int _currentIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          _buildHomeBody(),   // ← 原来 body 的内容
+          _buildHomeBody(), // ← 原来 body 的内容
           const FoodOrderListScreen(),
           const CartPage(),
         ],
@@ -133,7 +163,6 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
       bottomNavigationBar: _buildBottomNav(context),
     );
   }
-
 
   // 把原来 body 里的内容提取成一个方法
   Widget _buildHomeBody() {
@@ -150,9 +179,7 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
         // 2. 吸顶搜索框
         SliverPersistentHeader(
           pinned: true,
-          delegate: _StickySearchBarDelegate(
-            onRefresh: () => _loadMerchants(),
-          ),
+          delegate: _StickySearchBarDelegate(onRefresh: () => _loadMerchants()),
         ),
 
         // 3. 轮播图
@@ -204,25 +231,24 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadMerchants,
-                    child: const Text('重试'),
+                    child: Text(StrConfig.of(context).login),
                   ),
                 ],
               ),
             ),
           )
         else if (_merchants.isEmpty)
-            const SliverFillRemaining(child: Center(child: Text('附近暂无商家')))
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                    (context, index) => _buildMerchantCard(_merchants[index]),
-                childCount: _merchants.length,
-              ),
+          const SliverFillRemaining(child: Center(child: Text('附近暂无商家')))
+        else
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildMerchantCard(_merchants[index]),
+              childCount: _merchants.length,
             ),
+          ),
       ],
     );
   }
-
 
   Widget _buildMerchantCard(MerchantModel merchant) {
     return InkWell(
@@ -230,10 +256,12 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => MenuPage(
-            merchantId: int.tryParse(merchant.id) ?? 1,
-            merchantName: merchant.name,
-          )),
+          MaterialPageRoute(
+            builder: (context) => MenuPage(
+              merchantId: int.tryParse(merchant.id) ?? 1,
+              merchantName: merchant.name,
+            ),
+          ),
         );
         // Navigator.push(
         //   context,
@@ -339,13 +367,15 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
     );
   }
 
-// ③ _buildBottomNav 里的 onTap 补上
+  // ③ _buildBottomNav 里的 onTap 补上
   Widget _buildBottomNav(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: Colors.orange,       // 选中色改成橙色更明显
+      selectedItemColor: Colors.orange,
+      // 选中色改成橙色更明显
       unselectedItemColor: Colors.grey,
-      currentIndex: _currentIndex,            // ← 关键：绑定当前 index
+      currentIndex: _currentIndex,
+      // ← 关键：绑定当前 index
       onTap: (index) {
         setState(() => _currentIndex = index); // ← 关键：切换
       },
@@ -358,7 +388,8 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
           icon: const Icon(Icons.receipt_long),
           label: StrConfig.of(context).order,
         ),
-        BottomNavigationBarItem( // ← 新增
+        BottomNavigationBarItem(
+          // ← 新增
           icon: const Icon(Icons.shopping_cart),
           label: StrConfig.of(context).buyCar,
         ),
@@ -392,7 +423,6 @@ class _CategorySectionState extends State<CategorySection>
 
     "assets/images/dessert.png",
     "assets/images/pho_food.png",
-
   ];
 
   late List<AnimationController> _controllers;
@@ -453,7 +483,6 @@ class _CategorySectionState extends State<CategorySection>
       StrConfig.of(context).krFood,
       StrConfig.of(context).westernFood,
       StrConfig.of(context).thaiFood,
-
     ];
 
     final sel = widget.selectedIndex;
@@ -474,7 +503,9 @@ class _CategorySectionState extends State<CategorySection>
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.orange.shade100 : Colors.grey[100],
+                      color: isSelected
+                          ? Colors.orange.shade100
+                          : Colors.grey[100],
                       shape: BoxShape.circle,
                       border: isSelected
                           ? Border.all(color: Colors.orange, width: 2)
@@ -497,7 +528,9 @@ class _CategorySectionState extends State<CategorySection>
                     items[i],
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                       color: isSelected ? Colors.orange.shade700 : null,
                     ),
                   ),

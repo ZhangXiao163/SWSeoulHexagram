@@ -33,4 +33,17 @@ class DishDetailModel {
     required this.tags,
     required this.reviews,
   });
+  DishDetailModel copyWith({String? description}) {
+    return DishDetailModel(
+      id: id,
+      name: name,
+      nameZh: nameZh,
+      imageUrl: imageUrl,
+      price: price,
+      currency: currency,
+      description: description ?? this.description,
+      tags: tags,
+      reviews: reviews,
+    );
+  }
 }
