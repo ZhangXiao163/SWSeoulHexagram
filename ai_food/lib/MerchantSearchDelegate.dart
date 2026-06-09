@@ -100,7 +100,7 @@ class MerchantSearchDelegate extends SearchDelegate {
 
   // 拉全量数据后本地过滤（Mock 阶段够用；真实接口可改成带 keyword 参数的请求）
   Future<List<MerchantModel>> _getFiltered() async {
-    _cachedList ??= await _repository.fetchNearbyMerchants(locale);
+    _cachedList ??= await _repository.fetchMerchantsByClass(0, locale); // 搜索默认查全部
     return _cachedList!
         .where((m) => m.name.toLowerCase().contains(query.toLowerCase()))
         .toList();

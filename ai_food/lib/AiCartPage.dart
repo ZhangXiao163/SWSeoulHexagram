@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'order_confirm_page.dart';
+
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
 
@@ -122,7 +124,13 @@ class _CartPageState extends State<CartPage> {
             ),
             const SizedBox(width: 12),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const OrderConfirmPage()),
+                );
+
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 elevation: 0,

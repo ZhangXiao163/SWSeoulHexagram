@@ -14,8 +14,9 @@ class StrConfig {
       'western_food': '西餐',
       'kr_food': '韩餐',
       'vit_food': '越南菜',
-      'thai_food': '泰国菜',
+
       'dessert_food': '甜品',
+      'thai_food': '甜品',
       'takeout': '外卖',
       'mine': '我的',
       'order': '订单',
@@ -66,8 +67,12 @@ class StrConfig {
       'western_food': '양식',
       'kr_food': '한식',
       'vit_food': '베트남 요리',
-      'thai_food': '태국 요리',
+
+      // 'thai_food': '태국 요리',
       'dessert_food': '디저트',
+
+      'thai_food': '디저트',
+
       'takeout': '배달',
       'mine': '마이페이지',
       'order': '주문내역',
@@ -119,6 +124,9 @@ class StrConfig {
   String get krFood => _data[locale.languageCode]!['kr_food']!;
   String get vitFood => _data[locale.languageCode]!['vit_food']!;
   String get thaiFood => _data[locale.languageCode]!['thai_food']!;
+
+  /// 返回分类名称列表（4个）
+  List<String> get categoryLabels => [chineseFood, krFood, westernFood, thaiFood];
 
   // 底部导航
   String get takeout => _data[locale.languageCode]!['takeout']!;

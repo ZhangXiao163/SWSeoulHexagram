@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:ai_food/AiCartPage.dart';
 import 'package:ai_food/config/login_manager.dart';
 import 'package:ai_food/login.dart';
+import 'package:ai_food/service/api_service.dart';
 import 'package:ai_food/service/merchant_repository.dart';
 import 'package:flutter/material.dart';
 
@@ -59,17 +60,31 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
 
   // 新增三个状态变量
   List<MerchantModel> _merchants = [];
+  int _selectedCategory = 0; // 当前选中的分类 (0=中餐,1=韩餐,2=日西,3=甜品)
   bool _isLoading = false;
   String? _errorMsg;
 
   @override
   void initState() {
     super.initState();
-    _loadMerchants();
     appLocale.addListener(_onLocaleChanged); // 监听语言切换
+    _tryLoadMerchants();
   }
 
   void _onLocaleChanged() => _loadMerchants(); // 切语言 → 重新拉取
+
+  /// 已登录才加载商家，未登录时显示空的引导状态
+  Future<void> _tryLoadMerchants() async {
+    if (!ApiService().isLoggedIn) {
+      setState(() {
+        _isLoading = false;
+        _errorMsg = '请先登录';
+        _merchants = [];
+      });
+      return;
+    }
+    await _loadMerchants();
+  }
 
   @override
   void dispose() {
@@ -83,15 +98,26 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
       _errorMsg = null;
     });
     try {
-      // 把当前语言传入
-      final list = await _repository.fetchNearbyMerchants(appLocale.value);
+      final list = await _repository.fetchMerchantsByClass(_selectedCategory, appLocale.value);
       setState(() => _merchants = list);
     } catch (e) {
-      setState(() => _errorMsg = e.toString());
+      final msg = e.toString();
+      if (msg.contains('401') || msg.contains('Unauthorized')) {
+        setState(() => _errorMsg = '登录已过期，请重新登录');
+      } else {
+        setState(() => _errorMsg = msg);
+      }
     } finally {
       setState(() => _isLoading = false);
     }
   }
+
+  void _onCategoryTap(int index) {
+    if (_selectedCategory == index) return;
+    setState(() => _selectedCategory = index);
+    _loadMerchants();
+  }
+
   int _currentIndex = 0;
   @override
   Widget build(BuildContext context) {
@@ -125,7 +151,7 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
         SliverPersistentHeader(
           pinned: true,
           delegate: _StickySearchBarDelegate(
-            onRefresh: () => setState(() {}),
+            onRefresh: () => _loadMerchants(),
           ),
         ),
 
@@ -138,12 +164,15 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
           ),
         ),
 
-        // 4. 分类动画区
+        // 4. 分类动画区（可点击切换分类）
         SliverToBoxAdapter(
           child: Container(
             color: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: const CategorySection(),
+            child: CategorySection(
+              selectedIndex: _selectedCategory,
+              onCategoryTap: _onCategoryTap,
+            ),
           ),
         ),
 
@@ -199,10 +228,12 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () {
-        //  跳转商家详情页
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MenuPage()),
+          MaterialPageRoute(builder: (context) => MenuPage(
+            merchantId: int.tryParse(merchant.id) ?? 1,
+            merchantName: merchant.name,
+          )),
         );
         // Navigator.push(
         //   context,
@@ -340,28 +371,31 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
 // 分类动画组件
 // ─────────────────────────────────────────
 class CategorySection extends StatefulWidget {
-  const CategorySection({super.key});
+  final int selectedIndex;
+  final void Function(int index) onCategoryTap;
+
+  const CategorySection({
+    super.key,
+    required this.selectedIndex,
+    required this.onCategoryTap,
+  });
 
   @override
   State<CategorySection> createState() => _CategorySectionState();
 }
 
-// class CategorySection extends StatefulWidget {
-//   const CategorySection({super.key});
-//
-//   @override
-//   State<CategorySection> createState() => _CategorySectionState();
-// }
-
 class _CategorySectionState extends State<CategorySection>
     with TickerProviderStateMixin {
-  // 图片路径是固定的，可以放在这里
   final List<String> _icons = [
     "assets/images/chinese_food.png",
-    "assets/images/western_food.png",
     "assets/images/korean_food.png",
+<<<<<<< HEAD
     "assets/images/dessert.png",
     "assets/images/pho_food.png",
+=======
+    "assets/images/western_food.png",
+    "assets/images/thai_food.png",
+>>>>>>> 8f2bfa01437f772b99c32f245ecd37c2820141c5
   ];
 
   late List<AnimationController> _controllers;
@@ -372,9 +406,9 @@ class _CategorySectionState extends State<CategorySection>
   void initState() {
     super.initState();
 
-    // 初始化 5 个动画控制器（对应 5 个分类）
+    // 4个分类 → 4个动画控制器
     _controllers = List.generate(
-      5,
+      4,
       (i) => AnimationController(
         vsync: this,
         duration: const Duration(milliseconds: 450),
@@ -419,45 +453,62 @@ class _CategorySectionState extends State<CategorySection>
     // 这样每次语言切换触发 build 时，文字都会更新，且不会报 context 错误
     final List<String> items = [
       StrConfig.of(context).chineseFood,
-      StrConfig.of(context).westernFood,
       StrConfig.of(context).krFood,
+      StrConfig.of(context).westernFood,
       StrConfig.of(context).thaiFood,
+<<<<<<< HEAD
       // StrConfig.of(context).vitFood,
+=======
+>>>>>>> 8f2bfa01437f772b99c32f245ecd37c2820141c5
     ];
 
+    final sel = widget.selectedIndex;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: List.generate(items.length, (i) {
-        return SlideTransition(
-          position: _slideAnims[i],
-          child: FadeTransition(
-            opacity: _fadeAnims[i],
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    shape: BoxShape.circle,
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      _icons[i],
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.fastfood,
-                        size: 20,
-                        color: Colors.grey,
+        final isSelected = sel == i;
+        return GestureDetector(
+          onTap: () => widget.onCategoryTap(i),
+          child: SlideTransition(
+            position: _slideAnims[i],
+            child: FadeTransition(
+              opacity: _fadeAnims[i],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.orange.shade100 : Colors.grey[100],
+                      shape: BoxShape.circle,
+                      border: isSelected
+                          ? Border.all(color: Colors.orange, width: 2)
+                          : null,
+                    ),
+                    child: ClipOval(
+                      child: Image.asset(
+                        _icons[i],
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.fastfood,
+                          size: 20,
+                          color: isSelected ? Colors.orange : Colors.grey,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                // 使用局部变量 items
-                Text(items[i], style: const TextStyle(fontSize: 11)),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    items[i],
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? Colors.orange.shade700 : null,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -823,7 +874,8 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
           );
         },
       ),
-    ).then((_) => onRefresh()); // 登录页返回后刷新
+    ).then((_) => onRefresh()); // 登录返回后刷新页面（setState）
+    // 注意: 登录成功后，_TakeoutHomePageState._tryLoadMerchants 会通过 ApiService.isLoggedIn 判断是否加载商家
   }
 
   @override

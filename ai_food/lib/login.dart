@@ -1,4 +1,5 @@
 import 'package:ai_food/config/login_manager.dart';
+import 'package:ai_food/service/api_service.dart';
 import 'package:flutter/material.dart';
 
 import 'config/StrConfig.dart';
@@ -13,6 +14,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController accountController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  bool _logging = false;
+  bool _isRegisterMode = false;
 
   @override
   void dispose() {
@@ -21,8 +24,8 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // 登录校验
-  void _onLoginPressed() {
+  // 登录/注册
+  Future<void> _onSubmit() async {
     final account = accountController.text.trim();
     final password = passwordController.text.trim();
 
@@ -36,10 +39,51 @@ class _LoginPageState extends State<LoginPage> {
       );
       return;
     }
-    LoginManager.instance.login(account);
-    debugPrint("点击登录");
-    Navigator.pop(context);
-    // 继续后续登录逻辑
+
+    setState(() => _logging = true);
+
+    try {
+      if (_isRegisterMode) {
+        // 注册
+        await ApiService().register(account, password);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('注册成功，请登录'), backgroundColor: Colors.green),
+        );
+        setState(() => _isRegisterMode = false);
+        setState(() => _logging = false);
+        return;
+      }
+
+      // 登录
+      final res = await ApiService().login(account, password);
+      if (!mounted) return;
+
+      final code = res['sysCode'] as String?;
+      if (code == '0000') {
+        LoginManager.instance.login(account);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('登录成功'), backgroundColor: Colors.green),
+          );
+          Navigator.pop(context, true);
+        }
+      } else {
+        final msg = res['sysMessage'] as String? ?? '登录失败';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('网络错误: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _logging = false);
+    }
   }
 
   @override
@@ -53,11 +97,9 @@ class _LoginPageState extends State<LoginPage> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 28),
-
             child: Column(
               children: [
                 const SizedBox(height: 30),
-
                 // Tiger头像
                 Container(
                   width: 110,
@@ -72,7 +114,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-
                   child: ClipOval(
                     child: Image.asset(
                       "assets/images/tiger.png",
@@ -80,25 +121,21 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
 
                 Text(
-                  StrConfig.of(context).lgWelcome,
+                  _isRegisterMode ? '注册账号' : StrConfig.of(context).lgWelcome,
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF6D5AE6),
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 Text(
-                  StrConfig.of(context).lgWelAi,
+                  _isRegisterMode ? '创建账号后即可登录' : StrConfig.of(context).lgWelAi,
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
-
                 const SizedBox(height: 40),
 
                 // 账号输入框
@@ -107,7 +144,6 @@ class _LoginPageState extends State<LoginPage> {
                   icon: Icons.account_box,
                   controller: accountController,
                 ),
-
                 const SizedBox(height: 18),
 
                 // 密码输入框
@@ -117,81 +153,69 @@ class _LoginPageState extends State<LoginPage> {
                   controller: passwordController,
                   obscureText: true,
                 ),
-
                 const SizedBox(height: 15),
 
                 // 登录按钮
                 SizedBox(
                   width: double.infinity,
                   height: 54,
-
                   child: ElevatedButton(
-                    onPressed: _onLoginPressed,
-
+                    onPressed: _logging ? null : _onSubmit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6D5AE6),
                       elevation: 0,
-
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
                       ),
                     ),
-
-                    child: Text(
-                      StrConfig.of(context).login,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: _logging
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            _isRegisterMode ? '注册' : StrConfig.of(context).login,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                 ),
-
                 const SizedBox(height: 30),
 
                 // 分割线
                 Row(
                   children: [
                     Expanded(
-                      child: Container(
-                        height: 1,
-                        color: Colors.grey.withOpacity(0.2),
-                      ),
+                      child: Container(height: 1, color: Colors.grey.withOpacity(0.2)),
                     ),
                     Expanded(
-                      child: Container(
-                        height: 1,
-                        color: Colors.grey.withOpacity(0.2),
-                      ),
+                      child: Container(height: 1, color: Colors.grey.withOpacity(0.2)),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 26),
 
-                // 第三方登录（预留位置）
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [SizedBox(width: 20), SizedBox(width: 20)],
-                ),
-
-                const SizedBox(height: 40),
-
-                // 注册
+                // 切换登录/注册模式
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      StrConfig.of(context).noAcc,
+                      _isRegisterMode ? '已有账号？' : StrConfig.of(context).noAcc,
                       style: const TextStyle(color: Colors.grey),
                     ),
-
                     TextButton(
-                      onPressed: () {},
-
+                      onPressed: () {
+                        setState(() => _isRegisterMode = !_isRegisterMode);
+                      },
                       child: Text(
-                        StrConfig.of(context).registerSoon,
+                        _isRegisterMode ? '去登录' : StrConfig.of(context).registerSoon,
                         style: const TextStyle(
                           color: Color(0xFF6D5AE6),
                           fontWeight: FontWeight.bold,
@@ -208,7 +232,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // 输入框
   Widget _buildInputBox({
     required String hint,
     required IconData icon,
@@ -217,11 +240,9 @@ class _LoginPageState extends State<LoginPage> {
   }) {
     return Container(
       height: 56,
-
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -230,49 +251,17 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ],
       ),
-
       child: TextField(
         controller: controller,
         obscureText: obscureText,
-
         decoration: InputDecoration(
           border: InputBorder.none,
-
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 18,
-          ),
-
+          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           prefixIcon: Icon(icon, color: const Color(0xFF6D5AE6)),
-
           hintText: hint,
-
           hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
         ),
       ),
-    );
-  }
-
-  // 第三方登录按钮（备用）
-  Widget _buildSocialButton({required IconData icon, required Color color}) {
-    return Container(
-      width: 52,
-      height: 52,
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-
-      child: Icon(icon, color: color, size: 28),
     );
   }
 }
