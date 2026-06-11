@@ -58,6 +58,7 @@ class TakeoutHomePage extends StatefulWidget {
 class _TakeoutHomePageState extends State<TakeoutHomePage> {
   final MerchantRepository _repository = MerchantRepository();
   final GlobalKey<CartPageState> _cartPageKey = GlobalKey<CartPageState>();
+  final GlobalKey<FoodOrderListScreenState> _orderListKey = GlobalKey<FoodOrderListScreenState>();
 
   // 新增三个状态变量
   List<MerchantModel> _merchants = [];
@@ -95,6 +96,37 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
     await _loadMerchants();
   }
 
+  /// 跳转登录页，登录成功后执行回调
+  void _requireLogin(VoidCallback onSuccess) {
+    if (LoginManager.instance.isLogin) {
+      onSuccess();
+      return;
+    }
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const LoginPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+              child: child,
+            ),
+          );
+        },
+      ),
+    ).then((result) {
+      if (result == true) {
+        _cartPageKey.currentState?.refreshCart();
+        _orderListKey.currentState?.refreshOrders();
+        onSuccess();
+      }
+      _tryLoadMerchants(); // 登录返回后刷新首页商家列表
+    });
+  }
+
   @override
   void dispose() {
     appLocale.removeListener(_onLocaleChanged); // 记得移除
@@ -121,6 +153,7 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
       ).then((result) {
         if (result == true) {
           _cartPageKey.currentState?.refreshCart(); // 登录成功 → 刷新购物车
+          _orderListKey.currentState?.refreshOrders(); // 登录成功 → 刷新订单
         }
         _tryLoadMerchants(); // 登录返回后重新检查登录状态
       });
@@ -163,7 +196,7 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
         index: _currentIndex,
         children: [
           _buildHomeBody(), // ← 原来 body 的内容
-          const FoodOrderListScreen(),
+          FoodOrderListScreen(key: _orderListKey),
           CartPage(key: _cartPageKey),
         ],
       ),
@@ -188,7 +221,10 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
           pinned: true,
           delegate: _StickySearchBarDelegate(
             onRefresh: () => _loadMerchants(),
-            onLoginSuccess: () => _cartPageKey.currentState?.refreshCart(),
+            onLoginSuccess: () {
+              _cartPageKey.currentState?.refreshCart();
+              _orderListKey.currentState?.refreshOrders();
+            },
           ),
         ),
 
@@ -387,7 +423,24 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
       currentIndex: _currentIndex,
       // ← 关键：绑定当前 index
       onTap: (index) {
+        if (index != 0 && !LoginManager.instance.isLogin) {
+          // 订单和购物车需要登录拦截
+          _requireLogin(() {
+            setState(() => _currentIndex = index);
+            if (index == 1) {
+              _orderListKey.currentState?.refreshOrders();
+            } else if (index == 2) {
+              _cartPageKey.currentState?.refreshCart();
+            }
+          });
+          return;
+        }
         setState(() => _currentIndex = index); // ← 关键：切换
+        if (index == 1) {
+          _orderListKey.currentState?.refreshOrders(); // 切换到订单页时刷新
+        } else if (index == 2) {
+          _cartPageKey.currentState?.refreshCart(); // 切换到购物车时刷新
+        }
       },
       items: [
         BottomNavigationBarItem(

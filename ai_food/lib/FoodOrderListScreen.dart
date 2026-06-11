@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ai_food/bean/OrderModel.dart';
-import 'package:ai_food/service/order_repository.dart';
+import 'package:ai_food/service/api_service.dart';
 import 'config/StrConfig.dart';
 import 'home.dart';
 
@@ -8,15 +8,18 @@ class FoodOrderListScreen extends StatefulWidget {
   const FoodOrderListScreen({super.key});
 
   @override
-  State<FoodOrderListScreen> createState() => _FoodOrderListScreenState();
+  State<FoodOrderListScreen> createState() => FoodOrderListScreenState();
 }
 
-class _FoodOrderListScreenState extends State<FoodOrderListScreen> {
-  final OrderRepository _repository = OrderRepository();
-
+class FoodOrderListScreenState extends State<FoodOrderListScreen> {
   List<OrderModel> _orders = [];
   bool _isLoading = false;
   String? _errorMsg;
+
+  /// 外部调用，刷新订单列表
+  void refreshOrders() {
+    _loadOrders();
+  }
 
   @override
   void initState() {
@@ -39,8 +42,8 @@ class _FoodOrderListScreenState extends State<FoodOrderListScreen> {
       _errorMsg = null;
     });
     try {
-      final list = await _repository.fetchOrders(appLocale.value); // ← 传入
-      setState(() => _orders = list);
+      final list = await ApiService().findOrdersByUserId(1);
+      setState(() => _orders = list.map((e) => OrderModel.fromJson(e as Map<String, dynamic>)).toList());
     } catch (e) {
       setState(() => _errorMsg = e.toString());
     } finally {
@@ -157,7 +160,11 @@ class _FoodOrderListScreenState extends State<FoodOrderListScreen> {
                   width: 80,
                   height: 80,
                   color: Colors.grey[200],
-                  child: Image.asset(order.imageUrl, fit: BoxFit.cover),
+                  child: order.imageUrl.isNotEmpty
+                      ? (order.imageUrl.startsWith('assets/')
+                          ? Image.asset(order.imageUrl, fit: BoxFit.cover)
+                          : Image.network(order.imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.receipt_long, size: 40, color: Colors.grey)))
+                      : const Icon(Icons.receipt_long, size: 40, color: Colors.grey),
                 ),
               ),
               const SizedBox(width: 12),

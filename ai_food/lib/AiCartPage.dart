@@ -2,56 +2,8 @@ import 'package:ai_food/config/StrConfig.dart';
 import 'package:ai_food/service/api_service.dart';
 import 'package:flutter/material.dart';
 
+import 'bean/cart_item.dart';
 import 'order_confirm_page.dart';
-
-// --- Data Models to Manage State ---
-
-class CartItem {
-  final int cartId;
-  final String title; // 对应 foodName
-  final double price; // 对应 foodPrice
-  final String imageUrl; // 对应 foodImg
-  bool isSelected;     // 对应 selected (1为选中，0为未选中)
-  int quantity;        // 对应 foodNum
-  final int merchantId; // 👈 新增这个字段
-  CartItem({
-    required this.cartId,
-    required this.title,
-    required this.price,
-    required this.imageUrl,
-    required this.merchantId, // 👈 构造函数也加上
-    this.isSelected = false,
-    this.quantity = 1,
-
-  });
-
-  // 从 JSON 映射数据模型
-  factory CartItem.fromJson(Map<String, dynamic> json) {
-    return CartItem(
-      merchantId: json['merchantId'] ?? 0, // 👈 从 JSON 中解析
-      cartId: json['cartId'] ?? 0,
-      title: json['foodName'] ?? '未知商品',
-      price: (json['foodPrice'] as num?)?.toDouble() ?? 0.0,
-      imageUrl: json['foodImg'] ?? '',
-      isSelected: json['selected'] == 1, // 接口返回1代表选中
-      quantity: json['foodNum'] ?? 1,
-    );
-  }
-}
-
-class ShopGroup {
-  final String shopName;
-  final bool isSelfOperated;
-  final List<CartItem> items;
-
-  ShopGroup({
-    required this.shopName,
-    required this.isSelfOperated,
-    required this.items,
-  });
-
-  bool get isShopSelected => items.every((item) => item.isSelected);
-}
 
 // --- Main Cart Page ---
 
@@ -326,7 +278,7 @@ class CartPageState extends State<CartPage> {
                 children: [
                   Text(StrConfig.of(context).totalLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   const SizedBox(width: 4),
-                  Text('￥${totalPrice.toStringAsFixed(2)}',
+                  Text('₩${totalPrice.toStringAsFixed(2)}',
                       style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold)),
                 ],
               ),
@@ -335,7 +287,13 @@ class CartPageState extends State<CartPage> {
           const SizedBox(width: 12),
           ElevatedButton(
             onPressed: selectedCount > 0 ? () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderConfirmPage()));
+              final selectedItems = _cartGroups
+                  .expand((group) => group.items)
+                  .where((item) => item.isSelected)
+                  .toList();
+              Navigator.push(context, MaterialPageRoute(builder: (context) => OrderConfirmPage(
+                selectedItems: selectedItems,
+              )));
             } : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -417,7 +375,7 @@ class CartPageState extends State<CartPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('￥${item.price.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontSize: 17, fontWeight: FontWeight.bold)),
+                    Text('₩${item.price.toStringAsFixed(2)}', style: const TextStyle(color: Colors.red, fontSize: 17, fontWeight: FontWeight.bold)),
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey[300]!),

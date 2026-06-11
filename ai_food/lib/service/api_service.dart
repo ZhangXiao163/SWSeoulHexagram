@@ -97,6 +97,31 @@ class ApiService {
   Future<void> deleteCart(int cartId) async {
     await _get('/swCart/delete/$cartId', {});
   }
+
+  /// 提交订单
+  Future<Map<String, dynamic>> submitOrder({
+    required String orderNo,
+    required int userId,
+    required int merchantId,
+    int addressId = 0,
+    required double totalPrice,
+    int orderStatus = 0,
+  }) async {
+    return _post('/swOrder/save/', {
+      'orderNo': orderNo,
+      'userId': userId,
+      'merchantId': merchantId,
+      'addressId': addressId,
+      'totalPrice': totalPrice,
+      'orderStatus': orderStatus,
+    });
+  }
+
+  /// 查询用户订单列表
+  Future<List<dynamic>> findOrdersByUserId(int userId) async {
+    final res = await _get('/swOrder/findByUserId/$userId', {});
+    return res['data'] as List<dynamic>? ?? [];
+  }
   // ── 通用 GET ──
   Future<Map<String, dynamic>> _get(String path, Map<String, String> params) async {
     final uri = Uri.parse('$_baseUrl$path').replace(queryParameters: params.isNotEmpty ? params : null);

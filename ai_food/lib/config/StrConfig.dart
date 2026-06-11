@@ -96,8 +96,8 @@ class StrConfig {
 
       // 订单确认页
       'confirm_order': '确认订单',
-      'discount_saved': '已优惠 ¥{0}',
-      'total_price_summary': '合计 ¥{0}',
+      'discount_saved': '已优惠 ₩{0}',
+      'total_price_summary': '合计 ₩{0}',
       'submit_order': '提交订单',
       'warm_tips_text': '温馨提示：请注意查看配送时间',
       'delivery_address': '配送地址',
@@ -107,6 +107,12 @@ class StrConfig {
       'delivery_fee_label': '配送费',
       'coupon_discount': '红包优惠',
       'estimated_delivery': '大约{0}送达',
+
+      // 支付页
+      'select_payment': '选择支付方式',
+      'payment_processing': '支付处理中...',
+      'payment_success': '支付成功',
+      'confirm_payment': '确认支付',
 
       // 详情页
       'add_cart_success': '加购物车成功',
@@ -220,8 +226,8 @@ class StrConfig {
 
       // 주문 확인
       'confirm_order': '주문 확인',
-      'discount_saved': '할인 ¥{0}',
-      'total_price_summary': '합계 ¥{0}',
+      'discount_saved': '할인 ₩{0}',
+      'total_price_summary': '합계 ₩{0}',
       'submit_order': '주문 제출',
       'warm_tips_text': '안내: 배송 시간을 확인해주세요',
       'delivery_address': '배송 주소',
@@ -231,6 +237,12 @@ class StrConfig {
       'delivery_fee_label': '배송비',
       'coupon_discount': '쿠폰 할인',
       'estimated_delivery': '약 {0} 도착 예정',
+
+      // 결제 페이지
+      'select_payment': '결제 수단 선택',
+      'payment_processing': '결제 처리 중...',
+      'payment_success': '결제 성공',
+      'confirm_payment': '결제 확인',
 
       // 상세 페이지
       'add_cart_success': '장바구니 담기 성공',
@@ -363,6 +375,12 @@ class StrConfig {
   String get deliveryFeeLabel => _data[locale.languageCode]!['delivery_fee_label']!;
   String get couponDiscount => _data[locale.languageCode]!['coupon_discount']!;
   String get estimatedDelivery => _data[locale.languageCode]!['estimated_delivery']!;
+
+  // 支付页
+  String get selectPayment => _data[locale.languageCode]!['select_payment']!;
+  String get paymentProcessing => _data[locale.languageCode]!['payment_processing']!;
+  String get paymentSuccess => _data[locale.languageCode]!['payment_success']!;
+  String get confirmPayment => _data[locale.languageCode]!['confirm_payment']!;
 
   // 详情页
   String get addCartSuccess => _data[locale.languageCode]!['add_cart_success']!;
