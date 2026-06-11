@@ -48,7 +48,7 @@ class _LoginPageState extends State<LoginPage> {
         await ApiService().register(account, password);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('注册成功，请登录'), backgroundColor: Colors.green),
+          SnackBar(content: Text(StrConfig.of(context).registerSuccess), backgroundColor: Colors.green),
         );
         setState(() => _isRegisterMode = false);
         setState(() => _logging = false);
@@ -58,18 +58,18 @@ class _LoginPageState extends State<LoginPage> {
       // 登录
       final res = await ApiService().login(account, password);
       if (!mounted) return;
-
+      print(res.toString());
       final code = res['sysCode'] as String?;
       if (code == '0000') {
         LoginManager.instance.login(account);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('登录成功'), backgroundColor: Colors.green),
+            SnackBar(content: Text(StrConfig.of(context).loginSuccess), backgroundColor: Colors.green),
           );
           Navigator.pop(context, true);
         }
       } else {
-        final msg = res['sysMessage'] as String? ?? '登录失败';
+        final msg = res['sysMessage'] as String? ?? StrConfig.of(context).loginFail;
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(msg), backgroundColor: Colors.red),
@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('网络错误: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('${StrConfig.of(context).networkErrorPrefix} $e'), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _logging = false);
@@ -124,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 24),
 
                 Text(
-                  _isRegisterMode ? '注册账号' : StrConfig.of(context).lgWelcome,
+                  _isRegisterMode ? StrConfig.of(context).registerAccount : StrConfig.of(context).lgWelcome,
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -133,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  _isRegisterMode ? '创建账号后即可登录' : StrConfig.of(context).lgWelAi,
+                  _isRegisterMode ? StrConfig.of(context).registerHint : StrConfig.of(context).lgWelAi,
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 const SizedBox(height: 40),
@@ -178,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           )
                         : Text(
-                            _isRegisterMode ? '注册' : StrConfig.of(context).login,
+                            _isRegisterMode ? StrConfig.of(context).registerBtnText : StrConfig.of(context).login,
                             style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -207,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      _isRegisterMode ? '已有账号？' : StrConfig.of(context).noAcc,
+                      _isRegisterMode ? StrConfig.of(context).hasAccountText : StrConfig.of(context).noAcc,
                       style: const TextStyle(color: Colors.grey),
                     ),
                     TextButton(
@@ -215,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                         setState(() => _isRegisterMode = !_isRegisterMode);
                       },
                       child: Text(
-                        _isRegisterMode ? '去登录' : StrConfig.of(context).registerSoon,
+                        _isRegisterMode ? StrConfig.of(context).goLoginText : StrConfig.of(context).registerSoon,
                         style: const TextStyle(
                           color: Color(0xFF6D5AE6),
                           fontWeight: FontWeight.bold,

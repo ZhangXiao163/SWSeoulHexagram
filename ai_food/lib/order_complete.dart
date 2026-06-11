@@ -1,3 +1,4 @@
+import 'package:ai_food/config/StrConfig.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -49,9 +50,9 @@ class OrderCompletePage extends StatelessWidget {
           },
         ),
 
-        title: const Text(
-          "订单完成",
-          style: TextStyle(
+        title: Text(
+          StrConfig.of(context).orderCompleteTitle,
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 22,
@@ -117,9 +118,9 @@ class OrderCompletePage extends StatelessWidget {
                   const SizedBox(height: 35),
 
                   // 标题
-                  const Text(
-                    "订单已完成",
-                    style: TextStyle(
+                  Text(
+                    StrConfig.of(context).orderCompleted,
+                    style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                     ),
@@ -128,10 +129,10 @@ class OrderCompletePage extends StatelessWidget {
                   const SizedBox(height: 14),
 
                   // 副标题
-                  const Text(
-                    "感谢您的购买\n祝您用餐愉快 ㅎㅎ",
+                  Text(
+                    StrConfig.of(context).orderThanks,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 18,
                       color: Colors.grey,
                       height: 1.6,
@@ -155,21 +156,21 @@ class OrderCompletePage extends StatelessWidget {
                       BorderRadius.circular(24),
                     ),
 
-                    child: const Column(
+                    child: Column(
 
                       children: [
 
                         Text(
-                          "订单编号",
-                          style: TextStyle(
+                          StrConfig.of(context).orderNumberLabel,
+                          style: const TextStyle(
                             fontSize: 16,
                             color: Colors.grey,
                           ),
                         ),
 
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
 
-                        Text(
+                        const Text(
                           "#20260516001",
                           style: TextStyle(
                             fontSize: 28,
@@ -178,11 +179,11 @@ class OrderCompletePage extends StatelessWidget {
                           ),
                         ),
 
-                        SizedBox(height: 18),
+                        const SizedBox(height: 18),
 
-                        Divider(),
+                        const Divider(),
 
-                        SizedBox(height: 18),
+                        const SizedBox(height: 18),
 
                         Row(
 
@@ -192,13 +193,13 @@ class OrderCompletePage extends StatelessWidget {
                           children: [
 
                             Text(
-                              "支付金额",
-                              style: TextStyle(
+                              StrConfig.of(context).paymentAmountLabel,
+                              style: const TextStyle(
                                 fontSize: 16,
                               ),
                             ),
 
-                            Text(
+                            const Text(
                               "¥15.88",
                               style: TextStyle(
                                 fontSize: 20,
@@ -236,9 +237,9 @@ class OrderCompletePage extends StatelessWidget {
 
                       onPressed: () {},
 
-                      child: const Text(
-                        "返回主页",
-                        style: TextStyle(
+                      child: Text(
+                        StrConfig.of(context).backToHome,
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -271,9 +272,9 @@ class OrderCompletePage extends StatelessWidget {
 
                       onPressed: () {},
 
-                      child: const Text(
-                        "再来一单",
-                        style: TextStyle(
+                      child: Text(
+                        StrConfig.of(context).orderAgain,
+                        style: const TextStyle(
                           color: Colors.orange,
                           fontSize: 17,
                           fontWeight: FontWeight.bold,

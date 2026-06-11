@@ -13,6 +13,7 @@ class ReviewModel {
 
 class DishDetailModel {
   final String id;
+  final int merchantId;
   final String name;
   final String nameZh;       // 副标题（中文）
   final String imageUrl;     // 本地 asset 或网络图
@@ -24,6 +25,7 @@ class DishDetailModel {
 
   const DishDetailModel({
     required this.id,
+    this.merchantId = 1,
     required this.name,
     required this.nameZh,
     required this.imageUrl,
@@ -36,6 +38,7 @@ class DishDetailModel {
   DishDetailModel copyWith({String? description}) {
     return DishDetailModel(
       id: id,
+      merchantId: merchantId,
       name: name,
       nameZh: nameZh,
       imageUrl: imageUrl,

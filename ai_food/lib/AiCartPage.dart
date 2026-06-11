@@ -1,24 +1,42 @@
+import 'package:ai_food/config/StrConfig.dart';
+import 'package:ai_food/service/api_service.dart';
 import 'package:flutter/material.dart';
+
 import 'order_confirm_page.dart';
 
 // --- Data Models to Manage State ---
 
 class CartItem {
-  final String title;
-  final String spec;
-  final double price;
-  final String imageUrl;
-  bool isSelected;
-  int quantity;
-
+  final int cartId;
+  final String title; // 对应 foodName
+  final double price; // 对应 foodPrice
+  final String imageUrl; // 对应 foodImg
+  bool isSelected;     // 对应 selected (1为选中，0为未选中)
+  int quantity;        // 对应 foodNum
+  final int merchantId; // 👈 新增这个字段
   CartItem({
+    required this.cartId,
     required this.title,
-    required this.spec,
     required this.price,
     required this.imageUrl,
+    required this.merchantId, // 👈 构造函数也加上
     this.isSelected = false,
     this.quantity = 1,
+
   });
+
+  // 从 JSON 映射数据模型
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      merchantId: json['merchantId'] ?? 0, // 👈 从 JSON 中解析
+      cartId: json['cartId'] ?? 0,
+      title: json['foodName'] ?? '未知商品',
+      price: (json['foodPrice'] as num?)?.toDouble() ?? 0.0,
+      imageUrl: json['foodImg'] ?? '',
+      isSelected: json['selected'] == 1, // 接口返回1代表选中
+      quantity: json['foodNum'] ?? 1,
+    );
+  }
 }
 
 class ShopGroup {
@@ -32,7 +50,6 @@ class ShopGroup {
     required this.items,
   });
 
-  // Helper to check if all items in this shop are checked
   bool get isShopSelected => items.every((item) => item.isSelected);
 }
 
@@ -42,48 +59,94 @@ class CartPage extends StatefulWidget {
   const CartPage({super.key});
 
   @override
-  State<CartPage> createState() => _CartPageState();
+  State<CartPage> createState() => CartPageState();
 }
 
-class _CartPageState extends State<CartPage> {
-  // Mock Data Initialization
-  final List<ShopGroup> _cartGroups = [
-    ShopGroup(
-      shopName: '绿联 (UGREEN) 京东自营旗舰店',
-      isSelfOperated: true,
-      items: [
-        CartItem(
-          title: '绿联Type-C转千兆扩展坞带网',
-          spec: '4合1【千兆网口】USB3.0*3',
-          price: 69.00,
-          imageUrl: 'assets/images/tiger.png',
-        ),
-        CartItem(
-          title: '绿联安卓快充数据线MicroUSB',
-          spec: '【热销80W+】1米安卓快充...',
-          price: 13.90,
-          imageUrl: 'assets/images/tiger.png',
-        ),
-      ],
-    ),
-    ShopGroup(
-      shopName: '蟹状元生鲜官方旗舰店',
-      isSelfOperated: false,
-      items: [
-        CartItem(
-          title: '【礼券】蟹状元 国货海鲜礼券',
-          spec: '1088型内含10件食材 3800g',
-          price: 82.90,
-          imageUrl: 'assets/images/tiger.png',
-        ),
-      ],
-    ),
-  ];
+class CartPageState extends State<CartPage> {
+  /// 外部调用，刷新购物车数据
+  void refreshCart() {
+    _fetchCartData();
+  }
+  List<ShopGroup> _cartGroups = [];
+  bool _isLoading = true;
+  String? _errorMsg;
 
-  // Global "Select All" status computed from modern data state
-  bool get isAllSelected => _cartGroups.every((group) => group.isShopSelected);
+  @override
+  void initState() {
+    super.initState();
+    _fetchCartData(); // 界面初始化时请求数据
+  }
 
-  // Total checkout cost calculated dynamically
+  // --- 网络请求方法 ---
+  Future<void> _fetchCartData() async {
+    // 1. 开始请求前，设置为加载状态
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMsg = null;
+      });
+    }
+
+    try {
+      final foodData = await ApiService().getCartList();
+      debugPrint('_fetchCartData: $foodData');
+
+      if (foodData.isNotEmpty && mounted) {
+        debugPrint('isNotEmpty:');
+
+        // 2. 将接口返回的 JSON/List 数据映射为你界面的 CartItem 模型
+        // 注意：请确保 foodData 的类型与你的 ApiService 返回类型一致
+        List<CartItem> items = foodData.map<CartItem>((json) {
+          return CartItem.fromJson(json); // 使用我们之前定义的 fromJson 工厂方法
+        }).toList();
+
+        // 3. 将扁平的购物车列表按 merchantId 分组为 ShopGroup
+        // 因为接口没有返回店铺名称，这里我们按 merchantId 分组，名称暂用 "店铺(ID)"
+        Map<int, List<CartItem>> groupedItems = {};
+        for (var item in items) {
+          // 假设你的 CartItem 模型里有 merchantId 字段 (之前没加的话需要加上)
+          groupedItems.putIfAbsent(item.merchantId, () => []).add(item);
+        }
+
+        // 4. 将 Map 转换为 List<ShopGroup>
+        List<ShopGroup> groups = groupedItems.entries.map((entry) {
+          return ShopGroup(
+            shopName: '${StrConfig.of(context).shopPrefix} (${entry.key})',
+            isSelfOperated: entry.key == 1, // 假设 merchantId == 1 是自营店
+            items: entry.value,
+          );
+        }).toList();
+
+        // 5. 更新状态，触发界面渲染
+        debugPrint('setState:');
+        setState(() {
+          _cartGroups = groups;
+          _isLoading = false;
+        });
+
+      } else if (mounted) {
+        // 请求成功但数据为空
+        debugPrint('isEmpty:');
+        setState(() {
+          _cartGroups = [];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('加载详情失败: $e');
+      // 6. 请求失败，更新错误状态
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMsg = StrConfig.of(context).loadFailedMsg;
+        });
+      }
+    }
+  }
+
+
+  bool get isAllSelected => _cartGroups.isNotEmpty && _cartGroups.every((group) => group.isShopSelected);
+
   double get totalPrice {
     double total = 0.0;
     for (var group in _cartGroups) {
@@ -96,7 +159,6 @@ class _CartPageState extends State<CartPage> {
     return total;
   }
 
-  // Total selected items quantity count
   int get selectedCount {
     int count = 0;
     for (var group in _cartGroups) {
@@ -108,8 +170,6 @@ class _CartPageState extends State<CartPage> {
     }
     return count;
   }
-
-  // --- Logic Methods for Interactive State ---
 
   void _toggleAll(bool value) {
     setState(() {
@@ -136,10 +196,57 @@ class _CartPageState extends State<CartPage> {
   }
 
   void _updateQuantity(CartItem item, int delta) {
-    setState(() {
-      final newQty = item.quantity + delta;
-      if (newQty >= 1) {
+    final newQty = item.quantity + delta;
+    if (newQty >= 1) {
+      setState(() {
         item.quantity = newQty;
+      });
+    } else if (newQty == 0) {
+      // 数量为 0 时，弹窗确认后调用接口删除
+      _showDeleteConfirmDialog(item);
+    }
+  }
+
+  void _showDeleteConfirmDialog(CartItem item) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(StrConfig.of(context).tips),
+        content: Text(StrConfig.of(context).confirmDelete.replaceFirst('{0}', item.title)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(StrConfig.of(context).cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteItem(item);
+            },
+            child: Text(StrConfig.of(context).confirm, style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteItem(CartItem item) async {
+    try {
+      await ApiService().deleteCart(item.cartId);
+    } catch (e) {
+      debugPrint('删除购物车商品失败: $e');
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      final groupIndex = _cartGroups.indexWhere((g) => g.items.any((i) => i.cartId == item.cartId));
+      if (groupIndex != -1) {
+        final group = _cartGroups[groupIndex];
+        group.items.removeWhere((i) => i.cartId == item.cartId);
+        if (group.items.isEmpty) {
+          _cartGroups.removeAt(groupIndex);
+        }
       }
     });
   }
@@ -149,84 +256,102 @@ class _CartPageState extends State<CartPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: Text('购物车 (${_cartGroups.fold(0, (sum, g) => sum + g.items.length)})',
+        title: Text('${StrConfig.of(context).cartTitle} (${_cartGroups.fold(0, (sum, g) => sum + g.items.length)})',
             style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 0,
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: _cartGroups.length,
-              itemBuilder: (context, index) {
-                return _buildCartGroup(_cartGroups[index]);
-              },
-            ),
-          ),
-        ],
-      ),
+      body: _buildBody(),
+      bottomNavigationBar: _cartGroups.isEmpty ? null : _buildBottomBar(),
+    );
+  }
 
-      // Bottom Navigation Toolbar
-      bottomNavigationBar: Container(
-        height: 65,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 15),
-        child: Row(
+  // 构建主体内容（处理加载、错误、空和正常状态）
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMsg != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Checkbox(
-              value: isAllSelected,
-              activeColor: const Color(0xFF6D5AE6),
-              shape: const CircleBorder(),
-              onChanged: (val) => _toggleAll(val ?? false),
-            ),
-            const Text('全选', style: TextStyle(fontSize: 14)),
-            const Spacer(),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  children: [
-                    const Text('合计:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    const SizedBox(width: 4),
-                    Text('￥${totalPrice.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const Text('优惠￥2.00', style: TextStyle(fontSize: 10, color: Colors.red)),
-              ],
-            ),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: selectedCount > 0 ? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => OrderConfirmPage()),
-                );
-              } : null, // Disables button if nothing is selected
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                disabledBackgroundColor: Colors.grey[400],
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-              ),
-              child: Text('去结算($selectedCount)',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-            ),
+            Text(_errorMsg!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: _fetchCartData, child: Text(StrConfig.of(context).retry)),
           ],
         ),
+      );
+    }
+
+    if (_cartGroups.isEmpty || _cartGroups.every((g) => g.items.isEmpty)) {
+      return Center(child: Text(StrConfig.of(context).cartEmpty, style: const TextStyle(fontSize: 16, color: Colors.grey)));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: _cartGroups.length,
+      itemBuilder: (context, index) {
+        return _buildCartGroup(_cartGroups[index]);
+      },
+    );
+  }
+
+  // 底部导航栏
+  Widget _buildBottomBar() {
+    return Container(
+      height: 65,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: Row(
+        children: [
+          Checkbox(
+            value: isAllSelected,
+            activeColor: const Color(0xFF6D5AE6),
+            shape: const CircleBorder(),
+            onChanged: (val) => _toggleAll(val ?? false),
+          ),
+          Text(StrConfig.of(context).selectAll, style: const TextStyle(fontSize: 14)),
+          const Spacer(),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Row(
+                children: [
+                  Text(StrConfig.of(context).totalLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 4),
+                  Text('￥${totalPrice.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 18, color: Colors.red, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: selectedCount > 0 ? () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const OrderConfirmPage()));
+            } : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              disabledBackgroundColor: Colors.grey[400],
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+            ),
+            child: Text('${StrConfig.of(context).checkout}($selectedCount)',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+          ),
+        ],
       ),
     );
   }
 
-  // Shop Group Card Component
   Widget _buildCartGroup(ShopGroup group) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -244,14 +369,13 @@ class _CartPageState extends State<CartPage> {
                     value: group.isShopSelected,
                     onChanged: (v) => _toggleShop(group, v ?? false),
                     activeColor: const Color(0xFF6D5AE6),
-                    shape: const CircleBorder()
-                ),
+                    shape: const CircleBorder()),
                 if (group.isSelfOperated)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     margin: const EdgeInsets.only(right: 6),
                     decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
-                    child: const Text('自营', style: TextStyle(color: Colors.white, fontSize: 10)),
+                    child: Text(StrConfig.of(context).selfOperated, style: const TextStyle(color: Colors.white, fontSize: 10)),
                   ),
                 Expanded(child: Text(group.shopName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
                 const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
@@ -264,7 +388,6 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  // Cart Item Row Component
   Widget _buildCartItem(CartItem item) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 12, 12),
@@ -275,11 +398,14 @@ class _CartPageState extends State<CartPage> {
               value: item.isSelected,
               onChanged: (v) => _toggleItem(item, v ?? false),
               activeColor: const Color(0xFF6D5AE6),
-              shape: const CircleBorder()
-          ),
+              shape: const CircleBorder()),
+          // 使用网络图片，并处理空图占位
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(item.imageUrl, width: 85, height: 85, fit: BoxFit.cover),
+            child: item.imageUrl.isNotEmpty
+                ? Image.network(item.imageUrl, width: 85, height: 85, fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage())
+                : _buildPlaceholderImage(),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -287,13 +413,7 @@ class _CartPageState extends State<CartPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item.title, style: const TextStyle(fontSize: 14, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(color: const Color(0xFFF8F8F8), borderRadius: BorderRadius.circular(4)),
-                  child: Text(item.spec, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20), // 原来规格的位置，由于接口没有规格字段，这里用间距替代
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -324,7 +444,16 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  // Refactored helper method to handle ink splashes and tap callbacks cleanly
+  // 占位图组件
+  Widget _buildPlaceholderImage() {
+    return Container(
+      width: 85,
+      height: 85,
+      color: Colors.grey[200],
+      child: const Icon(Icons.fastfood, color: Colors.grey, size: 40),
+    );
+  }
+
   Widget _qtyButton(IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,

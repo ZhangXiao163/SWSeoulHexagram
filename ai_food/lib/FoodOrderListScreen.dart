@@ -83,20 +83,20 @@ class _FoodOrderListScreenState extends State<FoodOrderListScreen> {
             const SizedBox(height: 12),
             Text(_errorMsg!, style: const TextStyle(color: Colors.grey)),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _loadOrders, child: const Text('重试')),
+            ElevatedButton(onPressed: _loadOrders, child: Text(StrConfig.of(context).retry)),
           ],
         ),
       );
     }
 
     if (_orders.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.receipt_long, size: 64, color: Colors.grey),
-            SizedBox(height: 12),
-            Text('暂无订单', style: TextStyle(color: Colors.grey)),
+            const Icon(Icons.receipt_long, size: 64, color: Colors.grey),
+            const SizedBox(height: 12),
+            Text(StrConfig.of(context).noOrders, style: const TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -199,9 +199,9 @@ class _FoodOrderListScreenState extends State<FoodOrderListScreen> {
                       fontSize: 16,
                     ),
                   ),
-                  const Text(
-                    '共1件',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  Text(
+                    StrConfig.of(context).totalItems.replaceFirst('{0}', '1'),
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),

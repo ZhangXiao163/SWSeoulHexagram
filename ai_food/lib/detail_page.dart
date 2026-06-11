@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import 'AiCartPage.dart';
 import 'ai/gemini_service.dart';
+import 'config/StrConfig.dart';
 import 'service/api_service.dart';
 import 'bean/DishDetailModel.dart';
 import 'config/StrConfig.dart';
@@ -29,6 +30,7 @@ class _DetailPageState extends State<DetailPage> {
   DishDetailModel? _dish;
   int _qty = 1;
   bool _loading = true;
+  bool _addingToCart = false;
   List<ReviewModel> _reviews = [];
   bool _reviewLoading = true;
 
@@ -54,13 +56,17 @@ class _DetailPageState extends State<DetailPage> {
         debugPrint('isNotEmpty:');
         final dish = DishDetailModel(
           id: (foodData['foodId'] ?? '1').toString(),
+          merchantId: (foodData['merchantId'] as num?)?.toInt() ?? 1,
           name: foodData['foodName'] as String? ?? '',
           nameZh: '',
           imageUrl: 'assets/images/banner1.jpg',
           price: (foodData['price'] as num?)?.toDouble() ?? 0,
           currency: '₩',
           description: '',
-          tags: [StrConfig.of(context).detailTag],
+          tags: [StrConfig
+              .of(context)
+              .detailTag
+          ],
           reviews: [],
         );
         debugPrint('setState:');
@@ -97,14 +103,18 @@ class _DetailPageState extends State<DetailPage> {
     if (mounted) {
       setState(() {
         _loading = false;
+        _reviewLoading = false; // 出错时也结束评价加载状态
       });
     }
   }
+
   Future<String> _generateDescription(DishDetailModel dish) async {
     await Future.delayed(Duration.zero);
     if (!mounted) return '';
 
-    final isKorean = Localizations.localeOf(context).languageCode == 'ko';
+    final isKorean = Localizations
+        .localeOf(context)
+        .languageCode == 'ko';
     final lang = isKorean ? '韩语(Korean)' : '中文(Chinese)';
 
     final prompt = '''
@@ -146,14 +156,17 @@ class _DetailPageState extends State<DetailPage> {
       return '';
     }
   }
+
   double get _totalPrice => (_dish?.price ?? 0) * _qty;
 
   Future<List<ReviewModel>> _generateReviews(DishDetailModel dish) async {
     // 关键修复：确保 context 已经挂载到树上
     await Future.delayed(Duration.zero);
-    if (!mounted) return[];
+    if (!mounted) return [];
     // 现在可以安全使用 context 了
-    final bool isKorean = Localizations.localeOf(context).languageCode == 'ko';
+    final bool isKorean = Localizations
+        .localeOf(context)
+        .languageCode == 'ko';
     final String languageName = isKorean ? "韩语(Korean)" : "中文(Chinese)";
     final prompt = '''
 根据以下菜品信息，生成5条真实感强的用户评价。
@@ -182,7 +195,9 @@ class _DetailPageState extends State<DetailPage> {
         body: jsonEncode({
           'system_instruction': {
             'parts': [
-              {'text': '你是一个外卖平台的用户评价生成器，只返回 JSON，不要有任何其他文字。'}
+              {
+                'text': '你是一个外卖平台的用户评价生成器，只返回 JSON，不要有任何其他文字。'
+              }
             ]
           },
           'contents': [
@@ -198,7 +213,8 @@ class _DetailPageState extends State<DetailPage> {
         }),
       );
 
-      if (res.statusCode != 200) throw Exception('API Error: ${res.statusCode}');
+      if (res.statusCode != 200) throw Exception(
+          'API Error: ${res.statusCode}');
 
       final data = jsonDecode(res.body);
       final rawText =
@@ -216,11 +232,12 @@ class _DetailPageState extends State<DetailPage> {
 
       final List list = jsonDecode(jsonStr);
       return list
-          .map((e) => ReviewModel(
-        name: e['name'] as String,
-        content: e['content'] as String,
-        rating: (e['rating'] as num).toDouble(),
-      ))
+          .map((e) =>
+          ReviewModel(
+            name: e['name'] as String,
+            content: e['content'] as String,
+            rating: (e['rating'] as num).toDouble(),
+          ))
           .toList();
     } catch (e) {
       debugPrint('评价生成失败: $e');
@@ -232,7 +249,6 @@ class _DetailPageState extends State<DetailPage> {
 
   @override
   Widget build(BuildContext context) {
-
     if (_loading || _dish == null) {
       return const Scaffold(
         body: Center(
@@ -250,7 +266,10 @@ class _DetailPageState extends State<DetailPage> {
           SingleChildScrollView(
             padding: EdgeInsets.only(
               top: 0,
-              bottom: 70 + MediaQuery.of(context).padding.bottom,
+              bottom: 70 + MediaQuery
+                  .of(context)
+                  .padding
+                  .bottom,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,22 +286,27 @@ class _DetailPageState extends State<DetailPage> {
                         height: 280,
                         width: double.infinity,
                         child: Image.network(
-                          'https://ai-food-images-seoul.s3.ap-northeast-2.amazonaws.com/food/${dish.id}.jpg',
+                          'https://ai-food-images-seoul.s3.ap-northeast-2.amazonaws.com/food/${dish
+                              .id}.jpg',
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: const Color(0xFFFAC775),
-                            child: const Center(
-                              child: Text('🍲',
-                                  style: TextStyle(fontSize: 72)),
-                            ),
-                          ),
+                          errorBuilder: (_, __, ___) =>
+                              Container(
+                                color: const Color(0xFFFAC775),
+                                child: const Center(
+                                  child: Text('🍲',
+                                      style: TextStyle(fontSize: 72)),
+                                ),
+                              ),
                         ),
                       ),
                     ),
 
                     // 返回按钮
                     Positioned(
-                      top: MediaQuery.of(context).padding.top + 8,
+                      top: MediaQuery
+                          .of(context)
+                          .padding
+                          .top + 8,
                       left: 14,
                       child: GestureDetector(
                         onTap: () => Navigator.of(context).pop(),
@@ -356,7 +380,8 @@ class _DetailPageState extends State<DetailPage> {
                               ),
                             ),
                             Text(
-                              '${dish.currency} ${dish.price.toStringAsFixed(0)}',
+                              '${dish.currency} ${dish.price.toStringAsFixed(
+                                  0)}',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -407,7 +432,9 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        StrConfig.of(context).userReview,
+                        StrConfig
+                            .of(context)
+                            .userReview,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -459,16 +486,24 @@ class _DetailPageState extends State<DetailPage> {
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
-                                    StrConfig.of(context).aiWorking,
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    StrConfig
+                                        .of(context)
+                                        .aiWorking,
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.grey),
                                   ),
                                 ],
                               ),
                             ),
                           )
                         else
-                          ..._reviews.asMap().entries.map(
-                                (e) => _ReviewItem(review: e.value, avatarIndex: e.key),
+                          ..._reviews
+                              .asMap()
+                              .entries
+                              .map(
+                                (e) =>
+                                _ReviewItem(
+                                    review: e.value, avatarIndex: e.key),
                           ),
                       ],
                     ),
@@ -489,39 +524,81 @@ class _DetailPageState extends State<DetailPage> {
               qty: _qty,
               totalPrice: _totalPrice,
               currency: dish.currency,
+              isAdding: _addingToCart,
               onMinus: () {
                 if (_qty > 1) setState(() => _qty--);
               },
               onPlus: () => setState(() => _qty++),
-              onAddToCart: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                        '${StrConfig.of(context).addCart}, x$_qty，${StrConfig.of(context).count} ${dish.currency}${_totalPrice.toStringAsFixed(0)}'),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: const Color(0xFFEF9F27),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
-                );
-                //  跳转购物车
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CartPage()),
-                );
-              },
+              onAddToCart: () => _addToCartApi(dish),
             ),
           ),
         ],
       ),
     );
   }
+
+// ── 调用加入购物车接口 ──────────────────────────────────────
+  Future<void> _addToCartApi(DishDetailModel dish) async {
+    if (_addingToCart) return;
+    setState(() {
+      _addingToCart = true;
+    });
+    try {
+      final res = await ApiService().addCart(
+        userId: 1,
+        foodId: int.tryParse(dish.id) ?? 1,
+        merchantId: dish.merchantId,
+        foodNum: _qty,
+        foodPrice: dish.price,
+        foodName: dish.name,
+      );
+      if (!mounted) return;
+
+      final success = res['sysCode'] == '0000';
+      final message = (res['data'] ?? res['sysMessage'] ?? '').toString();
+      print(res.toString());
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message.isNotEmpty ? message : (success ? StrConfig.of(context).addCartSuccess : StrConfig.of(context).addCartFail)),
+          duration: const Duration(seconds: 2),
+          backgroundColor: success ? const Color(0xFFEF9F27) : Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+
+      if (success) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const CartPage()),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(StrConfig.of(context).addCartError.replaceFirst('{0}', e.toString())),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _addingToCart = false;
+        });
+      }
+    }
+  }
 }
 
 // ── 标签组件 ───────────────────────────────────────────────
 class _TagChip extends StatelessWidget {
   final String label;
+
   const _TagChip({required this.label});
 
   @override
@@ -562,11 +639,12 @@ class _ReviewItem extends StatelessWidget {
     final colors = _avatarColors[avatarIndex % _avatarColors.length];
     final stars = List.generate(
       5,
-          (i) => Icon(
-        i < review.rating ? Icons.star : Icons.star_border,
-        size: 12,
-        color: const Color(0xFFEF9F27),
-      ),
+          (i) =>
+          Icon(
+            i < review.rating ? Icons.star : Icons.star_border,
+            size: 12,
+            color: const Color(0xFFEF9F27),
+          ),
     );
 
     return Container(
@@ -638,6 +716,7 @@ class _BottomBar extends StatelessWidget {
   final int qty;
   final double totalPrice;
   final String currency;
+  final bool isAdding;
   final VoidCallback onMinus;
   final VoidCallback onPlus;
   final VoidCallback onAddToCart;
@@ -646,6 +725,7 @@ class _BottomBar extends StatelessWidget {
     required this.qty,
     required this.totalPrice,
     required this.currency,
+    required this.isAdding,
     required this.onMinus,
     required this.onPlus,
     required this.onAddToCart,
@@ -655,7 +735,10 @@ class _BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+          16, 12, 16, MediaQuery
+          .of(context)
+          .padding
+          .bottom + 12),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Color(0xFFF0F0F0))),
@@ -665,7 +748,7 @@ class _BottomBar extends StatelessWidget {
           // 加入购物车按钮在左
           Expanded(
             child: GestureDetector(
-              onTap: onAddToCart,
+              onTap: isAdding ? null : onAddToCart,
               child: Container(
                 height: 46,
                 decoration: BoxDecoration(
@@ -673,7 +756,16 @@ class _BottomBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(23),
                 ),
                 alignment: Alignment.center,
-                child: Row(
+                child: isAdding
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
@@ -683,7 +775,10 @@ class _BottomBar extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '${StrConfig.of(context).addCart}  · $currency${totalPrice.toStringAsFixed(0)}',
+                      '${StrConfig
+                          .of(context)
+                          .addCart}  · $currency${totalPrice.toStringAsFixed(
+                          0)}',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 15,
@@ -736,6 +831,7 @@ class _BottomBar extends StatelessWidget {
 class _QtyButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
+
   const _QtyButton({required this.icon, required this.onTap});
 
   @override

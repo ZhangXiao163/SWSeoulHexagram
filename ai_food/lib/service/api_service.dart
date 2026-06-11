@@ -71,6 +71,32 @@ class ApiService {
     return res['data'] as Map<String, dynamic>? ?? {};
   }
 
+  Future<Map<String, dynamic>> addCart({
+    required int userId,
+    required int foodId,
+    required int merchantId,
+    required int foodNum,
+    required double foodPrice,
+    required String foodName,
+  }) async {
+    return _post('/swCart/addCart', {
+      'userId': userId,
+      'foodId': foodId,
+      'merchantId': merchantId,
+      'foodNum': foodNum,
+      'foodPrice': foodPrice,
+      'foodName': foodName,
+    });
+  }
+  Future<List<dynamic>> getCartList() async {
+    final res = await _get('/swCart/findByUserId/1', {});
+    return res['data'] as List<dynamic>? ?? [];
+  }
+
+  /// 删除购物车商品
+  Future<void> deleteCart(int cartId) async {
+    await _get('/swCart/delete/$cartId', {});
+  }
   // ── 通用 GET ──
   Future<Map<String, dynamic>> _get(String path, Map<String, String> params) async {
     final uri = Uri.parse('$_baseUrl$path').replace(queryParameters: params.isNotEmpty ? params : null);

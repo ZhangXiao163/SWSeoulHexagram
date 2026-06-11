@@ -1,3 +1,4 @@
+import 'package:ai_food/config/StrConfig.dart';
 import 'package:ai_food/detail_page.dart';
 import 'package:ai_food/service/api_service.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +56,7 @@ class _MenuPageState extends State<MenuPage> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          widget.merchantName ?? '菜单',
+          widget.merchantName ?? StrConfig.of(context).menu,
           style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold, fontSize: 22),
         ),
         centerTitle: true,
@@ -66,14 +67,14 @@ class _MenuPageState extends State<MenuPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text('加载失败: $_error'))
+              ? Center(child: Text(StrConfig.of(context).loadFailPrefix.replaceFirst('{0}', _error!)))
               : Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
                       TextField(
                         decoration: InputDecoration(
-                          hintText: '搜索菜单',
+                          hintText: StrConfig.of(context).searchMenu,
                           hintStyle: TextStyle(color: Colors.grey.shade500),
                           prefixIcon: const Icon(Icons.search, color: Colors.grey),
                           filled: true,
@@ -138,9 +139,9 @@ class _MenuPageState extends State<MenuPage> {
                                         Text('₩ ${itemPrice.toStringAsFixed(0)}', style: const TextStyle(color: Colors.orange, fontSize: 18, fontWeight: FontWeight.bold)),
                                         const SizedBox(height: 10),
                                         Row(children: [
-                                          _tagWidget("人气"),
+                                          _tagWidget(StrConfig.of(context).popular),
                                           const SizedBox(width: 8),
-                                          _tagWidget("推荐"),
+                                          _tagWidget(StrConfig.of(context).recommended),
                                         ]),
                                       ],
                                     ),

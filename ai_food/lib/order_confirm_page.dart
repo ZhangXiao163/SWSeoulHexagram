@@ -1,3 +1,4 @@
+import 'package:ai_food/config/StrConfig.dart';
 import 'package:flutter/material.dart';
 
 import 'order_complete.dart';
@@ -32,9 +33,9 @@ class OrderConfirmPage extends StatelessWidget {
             Navigator.maybePop(context);
           },
         ),
-        title: const Text(
-          "确认订单",
-          style: TextStyle(
+        title: Text(
+          StrConfig.of(context).confirmOrder,
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
           ),
@@ -50,22 +51,22 @@ class OrderConfirmPage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    "已优惠 ¥2",
-                    style: TextStyle(
+                    StrConfig.of(context).discountSaved.replaceFirst('{0}', '2'),
+                    style: const TextStyle(
                       color: Colors.orange,
                       fontSize: 14,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
-                    "合计 ¥15.88",
-                    style: TextStyle(
+                    StrConfig.of(context).totalPriceSummary.replaceFirst('{0}', '15.88'),
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
@@ -89,9 +90,9 @@ class OrderConfirmPage extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => const OrderCompletePage()),
                   );
                 },
-                child: const Text(
-                  "提交订单",
-                  style: TextStyle(
+                child: Text(
+                  StrConfig.of(context).submitOrder,
+                  style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -113,15 +114,15 @@ class OrderConfirmPage extends StatelessWidget {
                 color: const Color(0xFFFFF3CD),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.volume_up,
+                  const Icon(Icons.volume_up,
                       color: Colors.orange),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      "温馨提示：请注意查看配送时间",
-                      style: TextStyle(fontSize: 14),
+                      StrConfig.of(context).warmTipsText,
+                      style: const TextStyle(fontSize: 14),
                     ),
                   )
                 ],
@@ -139,20 +140,20 @@ class OrderConfirmPage extends StatelessWidget {
                 children: [
                   rowItem(
                     Icons.location_on,
-                    "配送地址",
-                    "首尔特别市 弘大 101号",
+                    StrConfig.of(context).deliveryAddress,
+                    "서울특별시 홍대 101호",
                   ),
                   const Divider(height: 28),
                   rowItem(
                     Icons.access_time,
-                    "送达时间",
-                    "大约10:16送达",
+                    StrConfig.of(context).deliveryTime,
+                    StrConfig.of(context).estimatedDelivery.replaceFirst('{0}', '10:16'),
                   ),
                   const Divider(height: 28),
                   rowItem(
                     Icons.payments,
-                    "支付方式",
-                    "支付宝",
+                    StrConfig.of(context).paymentMethod,
+                    "Alipay",
                   ),
                 ],
               ),
@@ -219,9 +220,9 @@ class OrderConfirmPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  priceRow("包装费", "¥1.88"),
-                  priceRow("配送费", "¥0"),
-                  priceRow("红包优惠", "-¥1"),
+                  priceRow(StrConfig.of(context).packagingFee, "¥1.88"),
+                  priceRow(StrConfig.of(context).deliveryFeeLabel, "¥0"),
+                  priceRow(StrConfig.of(context).couponDiscount, "-¥1"),
                 ],
               ),
             ),

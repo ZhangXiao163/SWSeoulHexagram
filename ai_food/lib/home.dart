@@ -57,6 +57,7 @@ class TakeoutHomePage extends StatefulWidget {
 
 class _TakeoutHomePageState extends State<TakeoutHomePage> {
   final MerchantRepository _repository = MerchantRepository();
+  final GlobalKey<CartPageState> _cartPageKey = GlobalKey<CartPageState>();
 
   // 新增三个状态变量
   List<MerchantModel> _merchants = [];
@@ -117,7 +118,13 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
             );
           },
         ),
-      ).then((_) => _onLocaleChanged());
+      ).then((result) {
+        if (result == true) {
+          _cartPageKey.currentState?.refreshCart(); // 登录成功 → 刷新购物车
+        }
+        _tryLoadMerchants(); // 登录返回后重新检查登录状态
+      });
+      return; // 未登录时不发起请求
     }
     setState(() {
       _isLoading = true;
@@ -157,7 +164,7 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
         children: [
           _buildHomeBody(), // ← 原来 body 的内容
           const FoodOrderListScreen(),
-          const CartPage(),
+          CartPage(key: _cartPageKey),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(context),
@@ -179,7 +186,10 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
         // 2. 吸顶搜索框
         SliverPersistentHeader(
           pinned: true,
-          delegate: _StickySearchBarDelegate(onRefresh: () => _loadMerchants()),
+          delegate: _StickySearchBarDelegate(
+            onRefresh: () => _loadMerchants(),
+            onLoginSuccess: () => _cartPageKey.currentState?.refreshCart(),
+          ),
         ),
 
         // 3. 轮播图
@@ -238,7 +248,7 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
             ),
           )
         else if (_merchants.isEmpty)
-          const SliverFillRemaining(child: Center(child: Text('附近暂无商家')))
+          SliverFillRemaining(child: Center(child: Text(StrConfig.of(context).noNearby)))
         else
           SliverList(
             delegate: SliverChildBuilderDelegate(
@@ -640,9 +650,10 @@ class _ImageBannerCarouselState extends State<ImageBannerCarousel> {
 // 吸顶搜索框
 // ─────────────────────────────────────────
 class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
-  final VoidCallback onRefresh; // 新增
+  final VoidCallback onRefresh;
+  final VoidCallback? onLoginSuccess; // 登录成功回调
 
-  _StickySearchBarDelegate({required this.onRefresh}); // 新增构造
+  _StickySearchBarDelegate({required this.onRefresh, this.onLoginSuccess});
 
   @override
   Widget build(
@@ -901,8 +912,12 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
           );
         },
       ),
-    ).then((_) => onRefresh()); // 登录返回后刷新页面（setState）
-    // 注意: 登录成功后，_TakeoutHomePageState._tryLoadMerchants 会通过 ApiService.isLoggedIn 判断是否加载商家
+    ).then((result) {
+      if (result == true) {
+        onLoginSuccess?.call(); // 登录成功 → 刷新购物车
+      }
+      onRefresh(); // 登录返回后刷新页面
+    });
   }
 
   @override
