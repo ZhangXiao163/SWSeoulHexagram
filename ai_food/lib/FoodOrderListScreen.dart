@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ai_food/bean/OrderModel.dart';
 import 'package:ai_food/service/api_service.dart';
 import 'config/StrConfig.dart';
-import 'home.dart';
+import 'config/app_state.dart';
 
 class FoodOrderListScreen extends StatefulWidget {
   const FoodOrderListScreen({super.key});
@@ -97,9 +97,22 @@ class FoodOrderListScreenState extends State<FoodOrderListScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.receipt_long, size: 64, color: Colors.grey),
-            const SizedBox(height: 12),
-            Text(StrConfig.of(context).noOrders, style: const TextStyle(color: Colors.grey)),
+            Icon(Icons.receipt_long, size: 72, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            Text(StrConfig.of(context).noOrders, style: TextStyle(fontSize: 16, color: Colors.grey[500])),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                if (context.mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              icon: const Icon(Icons.restaurant),
+              label: Text(StrConfig.of(context).takeout),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+            ),
           ],
         ),
       );

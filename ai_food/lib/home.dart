@@ -5,6 +5,7 @@ import 'package:ai_food/login.dart';
 import 'package:ai_food/service/api_service.dart';
 import 'package:ai_food/service/merchant_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 
 import 'FoodOrderListScreen.dart';
 import 'MerchantSearchDelegate.dart';
@@ -13,10 +14,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'bean/MerchantModel.dart';
 import 'config/StrConfig.dart';
+import 'config/app_state.dart';
 import 'menu_page.dart';
-
-// 1. 定义全局变量
-ValueNotifier<Locale> appLocale = ValueNotifier(const Locale('zh'));
+import 'profile_page.dart';
 
 void main() => runApp(const MyApp());
 
@@ -25,23 +25,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 2. 监听语言变化
     return ValueListenableBuilder<Locale>(
       valueListenable: appLocale,
-      builder: (context, locale, child) {
+      builder: (context, locale, __) {
         return MaterialApp(
           locale: locale,
           debugShowCheckedModeBanner: false,
-          // supportedLocales 可以保留 const，因为 Locale 构造函数是 const 的
           supportedLocales: const [Locale('zh'), Locale('ko')],
-
-          // 删掉这里的 const
-          localizationsDelegates: [
+          localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: TakeoutHomePage(),
+          home: const TakeoutHomePage(),
         );
       },
     );
@@ -85,14 +81,7 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
 
   /// 已登录才加载商家，未登录时显示空的引导状态
   Future<void> _tryLoadMerchants() async {
-    if (!ApiService().isLoggedIn) {
-      setState(() {
-        _isLoading = false;
-        _errorMsg = "please login first";
-        _merchants = [];
-      });
-      return;
-    }
+    // 未登录也加载商家列表，点击时才拦截
     await _loadMerchants();
   }
 
@@ -134,31 +123,6 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
   }
 
   Future<void> _loadMerchants() async {
-    if (!LoginManager.instance.isLogin) {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-          const LoginPage(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ).then((result) {
-        if (result == true) {
-          _cartPageKey.currentState?.refreshCart(); // 登录成功 → 刷新购物车
-          _orderListKey.currentState?.refreshOrders(); // 登录成功 → 刷新订单
-        }
-        _tryLoadMerchants(); // 登录返回后重新检查登录状态
-      });
-      return; // 未登录时不发起请求
-    }
     setState(() {
       _isLoading = true;
       _errorMsg = null;
@@ -195,104 +159,149 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          _buildHomeBody(), // ← 原来 body 的内容
+          _buildHomeBody(),
           FoodOrderListScreen(key: _orderListKey),
           CartPage(key: _cartPageKey),
+          ProfilePage(
+            onSwitchToTakeout: () => setState(() => _currentIndex = 0),
+            onLoginSuccess: () {
+              _cartPageKey.currentState?.refreshCart();
+              _orderListKey.currentState?.refreshOrders();
+              _tryLoadMerchants();
+              setState(() {});
+            },
+          ),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(context),
     );
   }
 
-  // 把原来 body 里的内容提取成一个方法
   Widget _buildHomeBody() {
-    return CustomScrollView(
-      slivers: [
-        // 1. 顶部占位
-        SliverToBoxAdapter(
-          child: Container(
-            height: 20,
-            color: Theme.of(context).colorScheme.inversePrimary,
-          ),
-        ),
-
-        // 2. 吸顶搜索框
-        SliverPersistentHeader(
-          pinned: true,
-          delegate: _StickySearchBarDelegate(
-            onRefresh: () => _loadMerchants(),
-            onLoginSuccess: () {
-              _cartPageKey.currentState?.refreshCart();
-              _orderListKey.currentState?.refreshOrders();
-            },
-          ),
-        ),
-
-        // 3. 轮播图
-        SliverToBoxAdapter(
-          child: Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: ImageBannerCarousel(),
-          ),
-        ),
-
-        // 4. 分类动画区（可点击切换分类）
-        SliverToBoxAdapter(
-          child: Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: CategorySection(
-              selectedIndex: _selectedCategory,
-              onCategoryTap: _onCategoryTap,
+    return RefreshIndicator(
+      onRefresh: _loadMerchants,
+      color: Colors.orange,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              height: 20,
+              color: Theme.of(context).colorScheme.inversePrimary,
             ),
           ),
-        ),
 
-        // 5. 附近商家标题
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-            child: Text(
-              StrConfig.of(context).nearby,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickySearchBarDelegate(
+              onRefresh: () => _loadMerchants(),
+              onLoginSuccess: () {
+                _cartPageKey.currentState?.refreshCart();
+                _orderListKey.currentState?.refreshOrders();
+              },
             ),
           ),
-        ),
 
-        // 6. 商家列表（条件判断内联进来）
-        if (_isLoading)
-          const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (_errorMsg != null)
-          SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
-                  const SizedBox(height: 12),
-                  Text(_errorMsg!, style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadMerchants,
-                    child: Text(StrConfig.of(context).login),
-                  ),
-                ],
+          SliverToBoxAdapter(
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: ImageBannerCarousel(),
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: CategorySection(
+                selectedIndex: _selectedCategory,
+                onCategoryTap: _onCategoryTap,
               ),
             ),
-          )
-        else if (_merchants.isEmpty)
-          SliverFillRemaining(child: Center(child: Text(StrConfig.of(context).noNearby)))
-        else
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildMerchantCard(_merchants[index]),
-              childCount: _merchants.length,
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              child: Text(
+                StrConfig.of(context).nearby,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
-      ],
+
+          if (_isLoading)
+            _buildShimmerList()
+          else if (_errorMsg != null)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
+                    const SizedBox(height: 12),
+                    Text(_errorMsg!, style: const TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadMerchants,
+                      child: Text(StrConfig.of(context).login),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_merchants.isEmpty)
+            SliverFillRemaining(child: Center(child: Text(StrConfig.of(context).noNearby)))
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildMerchantCard(_merchants[index]),
+                childCount: _merchants.length,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// 骨架屏 — 加载时显示卡片占位
+  Widget _buildShimmerList() {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) => Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.all(12),
+            height: 104,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Container(width: 80, height: 80, decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8))),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(height: 14, width: 120, color: Colors.grey[200]),
+                      const SizedBox(height: 8),
+                      Container(height: 10, width: 80, color: Colors.grey[200]),
+                      const SizedBox(height: 8),
+                      Container(height: 10, width: 160, color: Colors.grey[200]),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        childCount: 5,
+      ),
     );
   }
 
@@ -300,19 +309,17 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MenuPage(
-              merchantId: int.tryParse(merchant.id) ?? 1,
-              merchantName: merchant.name,
+        _requireLogin(() {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MenuPage(
+                merchantId: int.tryParse(merchant.id) ?? 1,
+                merchantName: merchant.name,
+              ),
             ),
-          ),
-        );
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => const DetailPage(productId:'牛肉饭',)),
-        // );
+          );
+        });
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -413,49 +420,30 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
     );
   }
 
-  // ③ _buildBottomNav 里的 onTap 补上
   Widget _buildBottomNav(BuildContext context) {
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       selectedItemColor: Colors.orange,
-      // 选中色改成橙色更明显
       unselectedItemColor: Colors.grey,
       currentIndex: _currentIndex,
-      // ← 关键：绑定当前 index
       onTap: (index) {
-        if (index != 0 && !LoginManager.instance.isLogin) {
-          // 订单和购物车需要登录拦截
+        if (index != 0 && index != 3 && !LoginManager.instance.isLogin) {
           _requireLogin(() {
             setState(() => _currentIndex = index);
-            if (index == 1) {
-              _orderListKey.currentState?.refreshOrders();
-            } else if (index == 2) {
-              _cartPageKey.currentState?.refreshCart();
-            }
+            if (index == 1) _orderListKey.currentState?.refreshOrders();
+            if (index == 2) _cartPageKey.currentState?.refreshCart();
           });
           return;
         }
-        setState(() => _currentIndex = index); // ← 关键：切换
-        if (index == 1) {
-          _orderListKey.currentState?.refreshOrders(); // 切换到订单页时刷新
-        } else if (index == 2) {
-          _cartPageKey.currentState?.refreshCart(); // 切换到购物车时刷新
-        }
+        setState(() => _currentIndex = index);
+        if (index == 1) _orderListKey.currentState?.refreshOrders();
+        if (index == 2) _cartPageKey.currentState?.refreshCart();
       },
       items: [
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.fastfood),
-          label: StrConfig.of(context).takeout,
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.receipt_long),
-          label: StrConfig.of(context).order,
-        ),
-        BottomNavigationBarItem(
-          // ← 新增
-          icon: const Icon(Icons.shopping_cart),
-          label: StrConfig.of(context).buyCar,
-        ),
+        BottomNavigationBarItem(icon: const Icon(Icons.fastfood), label: StrConfig.of(context).takeout),
+        BottomNavigationBarItem(icon: const Icon(Icons.receipt_long), label: StrConfig.of(context).order),
+        BottomNavigationBarItem(icon: const Icon(Icons.shopping_cart), label: StrConfig.of(context).buyCar),
+        BottomNavigationBarItem(icon: const Icon(Icons.person), label: StrConfig.of(context).mine),
       ],
     );
   }

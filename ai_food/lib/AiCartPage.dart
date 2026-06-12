@@ -239,7 +239,32 @@ class CartPageState extends State<CartPage> {
     }
 
     if (_cartGroups.isEmpty || _cartGroups.every((g) => g.items.isEmpty)) {
-      return Center(child: Text(StrConfig.of(context).cartEmpty, style: const TextStyle(fontSize: 16, color: Colors.grey)));
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.shopping_cart_outlined, size: 72, color: Colors.grey[300]),
+            const SizedBox(height: 16),
+            Text(StrConfig.of(context).cartEmpty, style: TextStyle(fontSize: 16, color: Colors.grey[500])),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                // 回到首页（tab 0）
+                if (context.mounted) {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                }
+              },
+              icon: const Icon(Icons.explore),
+              label: Text(StrConfig.of(context).takeout),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(

@@ -464,6 +464,7 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
         children: [
           _buildHeader(),
           Expanded(child: _buildChatArea()),
+          _buildQuickChips(),
           _buildInputRow(),
         ],
       ),
@@ -755,6 +756,31 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
           child: const _TypingDots(),
         ),
       ],
+    );
+  }
+
+  Widget _buildQuickChips() {
+    final isKorean = Localizations.localeOf(context).languageCode == 'ko';
+    final chips = isKorean
+        ? ['🌶️ 매운맛', '🍗 치킨', '🍜 면요리', '💰 가성비', '🔥 인기메뉴']
+        : ['🌶️ 辣的', '🍗 炸鸡', '🍜 面食', '💰 实惠', '🔥 人气'];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: chips.map((c) => Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ActionChip(
+              avatar: Text(c.substring(0, 2)),
+              label: Text(c.substring(2), style: const TextStyle(fontSize: 12)),
+              onPressed: () => _send(c.substring(2)),
+              backgroundColor: const Color(0xFFF0EBFF),
+            ),
+          )).toList(),
+        ),
+      ),
     );
   }
 

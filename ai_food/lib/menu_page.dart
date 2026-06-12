@@ -16,8 +16,10 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   List<Map<String, dynamic>> menuList = [];
+  List<Map<String, dynamic>> _allMenu = []; // 全量数据，用于搜索
   bool _loading = true;
   String? _error;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -38,10 +40,26 @@ class _MenuPageState extends State<MenuPage> {
           'stock': map['stock'] ?? 0,
         };
       }).toList();
-      if (mounted) setState(() {menuList = list; _loading = false;});
+      if (mounted) setState(() {_allMenu = list; menuList = list; _loading = false;});
     } catch (e) {
       if (mounted) setState(() {_error = e.toString(); _loading = false;});
     }
+  }
+
+  void _onSearch(String q) {
+    setState(() {
+      _searchQuery = q;
+      if (q.isEmpty) {
+        menuList = List.from(_allMenu);
+      } else {
+        menuList = _allMenu.where((item) {
+          final name = (item['name'] as String? ?? '').toLowerCase();
+          final desc = (item['desc'] as String? ?? '').toLowerCase();
+          final kw = q.toLowerCase();
+          return name.contains(kw) || desc.contains(kw);
+        }).toList();
+      }
+    });
   }
 
   @override
@@ -73,10 +91,14 @@ class _MenuPageState extends State<MenuPage> {
                   child: Column(
                     children: [
                       TextField(
+                        onChanged: _onSearch,
                         decoration: InputDecoration(
                           hintText: StrConfig.of(context).searchMenu,
                           hintStyle: TextStyle(color: Colors.grey.shade500),
                           prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(icon: const Icon(Icons.clear, color: Colors.grey), onPressed: () => _onSearch(''))
+                              : null,
                           filled: true,
                           fillColor: Colors.white,
                           contentPadding: const EdgeInsets.symmetric(vertical: 15),

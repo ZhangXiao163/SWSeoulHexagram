@@ -494,6 +494,46 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
+  /// 加购飞入动画 — 小圆球从屏幕中央飞入右下角购物车
+  void _flyToCartAnimation() {
+    final overlay = Overlay.of(context);
+    final size = MediaQuery.of(context).size;
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOutCubic,
+        onEnd: () => entry.remove(),
+        builder: (_, t, __) {
+          final top = size.height * 0.35 - t * (size.height * 0.35);
+          final left = size.width * 0.5 + t * (size.width * 0.35);
+          final scale = 1.0 - t * 0.6;
+          final opacity = 1.0 - t;
+          return Positioned(
+            top: top,
+            left: left,
+            child: Opacity(
+              opacity: opacity.clamp(0.0, 1.0),
+              child: Transform.scale(
+                scale: scale,
+                child: Container(
+                  width: 40, height: 40,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEF9F27),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.shopping_cart, color: Colors.white, size: 20),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    overlay.insert(entry);
+  }
+
 // ── 调用加入购物车接口 ──────────────────────────────────────
   Future<void> _addToCartApi(DishDetailModel dish) async {
     if (_addingToCart) return;
@@ -526,6 +566,7 @@ class _DetailPageState extends State<DetailPage> {
       );
 
       if (success) {
+        _flyToCartAnimation();
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const CartPage()),

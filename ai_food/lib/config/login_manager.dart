@@ -14,4 +14,9 @@ class LoginManager {
   String getLoginName() {
     return loginName;
   }
+
+  void clear() {
+    isLogin = false;
+    loginName = '';
+  }
 }
