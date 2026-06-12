@@ -7,7 +7,7 @@ class StrConfig {
   static final Map<String, Map<String, String>> _data = {
     'zh': {
       'search_hint': '搜索食物...',
-      'ask_gemini': '问问 Gemini',
+      'ask_gemini': '问问 AI',
       'search_btn': '搜索',
       'nearby': '附近商家',
       'chinese_food': '中餐',
@@ -33,6 +33,7 @@ class StrConfig {
       'trending_title': '今日美食趋势',
       'trending_update': '实时更新 · 韩国最火外卖',
       'click_to_ask': '点击条目直接咨询 AI 推荐 👇',
+      'ask_about_dish': '我想要了解关于',
       // 底部对话框
       'ai_greeting': '你好！我是你的 AI 美食助手 🍽️\n告诉我你今天想吃什么口味？',
       'talk_hint': '输入你的口味偏好...',
@@ -136,7 +137,7 @@ class StrConfig {
     },
     'ko': {
       'search_hint': '음식을 검색하세요...',
-      'ask_gemini': 'Gemini에게 물어보기',
+      'ask_gemini': 'AI에게 물어보기',
       'search_btn': '검색',
       'nearby': '주변 상점',
       'chinese_food': '중식',
@@ -162,6 +163,7 @@ class StrConfig {
       'trending_title': '오늘의 맛집 트렌드',
       'trending_update': '실시간 업데이트 · 한국 인기 배달 메뉴',
       'click_to_ask': '항목을 클릭하여 AI 추천을 받아보세요 👇',
+      'ask_about_dish': '자세히 알고 싶어요',
       // 底部对话框
       'ai_greeting': '안녕하세요! 당신의 AI 푸드 헬퍼입니다 🍽️\n오늘 어떤 스타일의 음식을 드시고 싶으신가요?',
       'talk_hint': '입맛 취향을 입력하세요...',
@@ -292,6 +294,7 @@ class StrConfig {
   String get trendingTitle => _data[locale.languageCode]!['trending_title']!;
   String get trendingUpdate => _data[locale.languageCode]!['trending_update']!;
   String get clickToAsk => _data[locale.languageCode]!['click_to_ask']!;
+  String get askAboutDish => _data[locale.languageCode]!['ask_about_dish']!;
   String get aiGreeting => _data[locale.languageCode]!['ai_greeting']!;
 
   String get errorMessage => _data[locale.languageCode]!['error']!;

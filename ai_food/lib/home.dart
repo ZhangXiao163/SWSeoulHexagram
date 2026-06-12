@@ -897,6 +897,7 @@ class _StickySearchBarDelegate extends SliverPersistentHeaderDelegate {
               appLocale.value = appLocale.value.languageCode == 'zh'
                   ? const Locale('ko')
                   : const Locale('zh');
+              ApiService().clearFoodsCache(); // 切换语言后清除菜品缓存
             },
             child: Container(
               width: 38,

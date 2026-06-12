@@ -3,10 +3,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 
 import 'AiCartPage.dart';
-import 'ai/gemini_service.dart';
+import 'ai/ai_service.dart';
 import 'config/StrConfig.dart';
 import 'service/api_service.dart';
 import 'bean/DishDetailModel.dart';
@@ -129,28 +128,11 @@ class _DetailPageState extends State<DetailPage> {
 ''';
 
     try {
-      final geminiService = GeminiService();
-      final res = await http.post(
-        Uri.parse(geminiService.geminiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'contents': [
-            {
-              'role': 'user',
-              'parts': [{'text': prompt}],
-            }
-          ],
-          'generationConfig': {
-            'temperature': 0.8,
-            'maxOutputTokens': 200,
-          },
-        }),
+      return await AiService().generate(
+        prompt: prompt,
+        temperature: 0.8,
+        maxTokens: 200,
       );
-
-      if (res.statusCode != 200) throw Exception('API Error');
-
-      final data = jsonDecode(res.body);
-      return data['candidates'][0]['content']['parts'][0]['text'] as String;
     } catch (e) {
       debugPrint('描述生成失败: $e');
       return '';
@@ -188,37 +170,12 @@ class _DetailPageState extends State<DetailPage> {
 ''';
 
     try {
-      final geminiService = GeminiService();
-      final res = await http.post(
-        Uri.parse(geminiService.geminiUrl),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'system_instruction': {
-            'parts': [
-              {
-                'text': '你是一个外卖平台的用户评价生成器，只返回 JSON，不要有任何其他文字。'
-              }
-            ]
-          },
-          'contents': [
-            {
-              'role': 'user',
-              'parts': [{'text': prompt}]
-            }
-          ],
-          'generationConfig': {
-            'temperature': 0.9,
-            'maxOutputTokens': 512,
-          },
-        }),
+      final rawText = await AiService().generate(
+        prompt: prompt,
+        systemPrompt: '你是一个外卖平台的用户评价生成器，只返回 JSON，不要有任何其他文字。',
+        temperature: 0.9,
+        maxTokens: 512,
       );
-
-      if (res.statusCode != 200) throw Exception(
-          'API Error: ${res.statusCode}');
-
-      final data = jsonDecode(res.body);
-      final rawText =
-      data['candidates'][0]['content']['parts'][0]['text'] as String;
 
       // 提取 JSON 部分，防止模型多返回了文字
       final start = rawText.indexOf('[');

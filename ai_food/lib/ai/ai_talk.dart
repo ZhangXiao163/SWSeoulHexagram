@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import '../config/StrConfig.dart';
 import '../detail_page.dart';
+import '../service/api_service.dart';
 import 'TrendItem.dart';
-import 'gemini_service.dart';
+import 'ai_service.dart';
 
 
 void main() {
@@ -49,12 +49,16 @@ class FoodCard {
   final String name;
   final String desc;
   final String tag;
+  int foodId;        // 由客户端匹配后填入，非 final
+  int merchantId;    // 由客户端匹配后填入，非 final
 
-  const FoodCard({
+  FoodCard({
     required this.emoji,
     required this.name,
     required this.desc,
     required this.tag,
+    this.foodId = 0,
+    this.merchantId = 0,
   });
 
   factory FoodCard.fromJson(Map<String, dynamic> j) =>
@@ -63,6 +67,8 @@ class FoodCard {
         name: j['name'] ?? '',
         desc: j['desc'] ?? '',
         tag: j['tag'] ?? '',
+        foodId: (j['foodId'] as num?)?.toInt() ?? 0,
+        merchantId: (j['merchantId'] as num?)?.toInt() ?? 0,
       );
 }
 
@@ -70,67 +76,156 @@ class FoodCard {
 
 class GeminiTalk {
 
-// 定义一个方法来获取系统提示词
-  String _getSystemPrompt(String language) {
-    return '''
-你是一个专业的美食推荐助手。
-请全程使用 $language 进行回复。
+  /// 完整菜品目录（带 foodId），纯本地存储，不发给 AI
+  List<Map<String, dynamic>> _foodCatalog = [];
 
-任务：
-1. 通过对话了解用户的：口味偏好、饮食限制、场景、预算。
-2. 当信息足够时，在回复末尾附带 JSON 推荐：
-FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
-
-限制：
-- 每次回复不超过 80 字。
-- 必须使用 $language。
-- 保持亲切自然的语气。
-''';
+  /// 存储目录 — 只存本地，不注入对话历史
+  void setFoodCatalog(List<Map<String, dynamic>> catalog) {
+    _foodCatalog = catalog;
+    debugPrint('🔍 [目录] 已存储 ${catalog.length} 道菜（仅本地，不发 AI）');
+    if (catalog.isNotEmpty) {
+      debugPrint('🔍 [目录] 前5道: ${catalog.take(5).map((f) => f['foodName']).toList()}');
+    }
   }
 
-  final List<Map<String, dynamic>> _history = [];
+  /// 关键字搜索本地目录 — 代码搜，不靠 AI
+  List<Map<String, dynamic>> searchCatalog(String query) {
+    if (query.trim().isEmpty || _foodCatalog.isEmpty) return [];
 
-  Future<ChatMessage> sendMessage(String userText, String systemPrompt) async {
-    _history.add({
-      'role': 'user',
-      'parts': [{'text': userText}]
-    });
+    final q = query.trim();
+    final results = <Map<String, dynamic>>[];
+    final seen = <int>{};
 
-    final body = jsonEncode({
-      'system_instruction': {
-        'parts': [
-          {'text': systemPrompt} // 这里使用传入的动态提示词
-        ]
-      },
-      'contents': _history,
-      'generationConfig': {
-        'temperature': 0.8,
-        'maxOutputTokens': 512,
-      },
-    });
-    final geminiService = GeminiService();
-    final res = await http.post(
-      Uri.parse(geminiService.geminiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    );
+    // 拆词搜索
+    final keywords = q
+        .split(RegExp(r'[\s，,、]+'))
+        .where((k) => k.length >= 1)
+        .toList();
 
-    if (res.statusCode != 200) {
-      throw Exception('API Error: ${res.statusCode} ${res.body}');
+    // 第一轮：完整词匹配
+    for (final kw in keywords) {
+      for (final food in _foodCatalog) {
+        final id = food['foodId'] as int;
+        if (seen.contains(id)) continue;
+        final name = food['foodName'].toString();
+        if (name.contains(kw)) {
+          results.add(food);
+          seen.add(id);
+        }
+      }
     }
 
-    final data = jsonDecode(res.body);
-    final rawText =
-    data['candidates'][0]['content']['parts'][0]['text'] as String;
+    // 第二轮：单字匹配（兜底）
+    if (results.isEmpty && q.length <= 4) {
+      for (final food in _foodCatalog) {
+        final name = food['foodName'].toString();
+        if (q.split('').any((ch) => name.contains(ch) && ch.trim().isNotEmpty)) {
+          results.add(food);
+        }
+      }
+    }
 
-    _history.add({
-      'role': 'model',
-      'parts': [
-        {'text': rawText}
-      ]
-    });
+    debugPrint('🔍 [搜索] "$q" → ${results.length} 道菜'
+        '${results.isNotEmpty ? ": ${results.take(5).map((f) => f['foodName']).toList()}" : ""}');
+    return results;
+  }
 
-    return _parseResponse(rawText);
+  /// 客户端精确匹配：用 AI 返回的菜名在本地目录中查找真实 foodId
+  void _matchFoodCards(List<FoodCard> cards) {
+    debugPrint('🔍 [匹配] 开始匹配 ${cards.length} 张卡片，目录共 ${_foodCatalog.length} 道菜');
+
+    if (_foodCatalog.isEmpty) {
+      debugPrint('❌ [匹配] 目录为空！无法匹配任何菜品');
+      return;
+    }
+
+    int matched = 0;
+    int failed = 0;
+
+    for (int i = 0; i < cards.length; i++) {
+      final card = cards[i];
+      if (card.foodId > 0) { matched++; continue; }
+
+      final name = card.name.trim();
+      debugPrint('🔍 [匹配] 卡片[$i] 菜名="$name"');
+
+      Map<String, dynamic>? match;
+
+      // 第一轮：精确匹配
+      for (final f in _foodCatalog) {
+        if (f['foodName'].toString().trim() == name) {
+          match = f;
+          debugPrint('  ✅ 精确匹配: "${f['foodName']}" → foodId=${f['foodId']}');
+          break;
+        }
+      }
+
+      // 第二轮：包含匹配
+      if (match == null) {
+        for (final f in _foodCatalog) {
+          final fn = f['foodName'].toString().trim();
+          if (fn.contains(name) || name.contains(fn)) {
+            match = f;
+            debugPrint('  ⚠️ 包含匹配: "$name" ≈ "$fn" → foodId=${f['foodId']}');
+            break;
+          }
+        }
+      }
+
+      // 第三轮：规范化匹配（去空格、去特殊字符）
+      if (match == null) {
+        final normName = name.replaceAll(RegExp(r'\s+'), '').toLowerCase();
+        for (final f in _foodCatalog) {
+          final fn = f['foodName'].toString().trim().replaceAll(RegExp(r'\s+'), '').toLowerCase();
+          if (fn == normName) {
+            match = f;
+            debugPrint('  ⚠️ 规范化匹配: "$name" ≈ "${f['foodName']}" → foodId=${f['foodId']}');
+            break;
+          }
+        }
+      }
+
+      if (match != null) {
+        card.foodId = match['foodId'] as int;
+        card.merchantId = match['merchantId'] as int? ?? 0;
+        matched++;
+      } else {
+        failed++;
+        debugPrint('  ❌ 未匹配: "$name" 在 ${_foodCatalog.length} 道菜中找不到');
+        debugPrint('  💡 目录前5道: ${_foodCatalog.take(5).map((f) => f['foodName']).toList()}');
+      }
+    }
+
+    debugPrint('🔍 [匹配] 结果: $matched 成功, $failed 失败');
+  }
+
+  final List<Map<String, String>> _history = [];
+
+  Future<ChatMessage> sendMessage(String userText, String systemPrompt) async {
+    _history.add({'role': 'user', 'content': userText});
+
+    // 构建 DeepSeek messages：[system, ...history]
+    final messages = <Map<String, String>>[
+      {'role': 'system', 'content': systemPrompt},
+      ..._history,
+    ];
+
+    final rawText = await AiService().chat(
+      messages: messages,
+      temperature: 0.8,
+      maxTokens: 512,
+    );
+
+    _history.add({'role': 'assistant', 'content': rawText});
+
+    final reply = _parseResponse(rawText);
+
+    // ✅ 客户端精确匹配：用菜名在本地目录中找到真实 foodId
+    if (reply.foodCards != null && reply.foodCards!.isNotEmpty) {
+      _matchFoodCards(reply.foodCards!);
+    }
+
+    return reply;
   }
 
   ChatMessage _parseResponse(String raw) {
@@ -191,7 +286,10 @@ class _AiFoodChatScreenState extends State<AiFoodChatScreen> {
     // 1. 启动趋势抓取（内部已有延迟处理）
     _fetchDynamicTrends();
 
-    // 2. 延迟显示欢迎语
+    // 2. 预加载菜品目录，注入 Gemini，确保推荐的都是库里的菜
+    _loadFoodCatalog();
+
+    // 3. 延迟显示欢迎语
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _addAssistantMessage(ChatMessage(
         role: 'assistant',
@@ -202,54 +300,62 @@ class _AiFoodChatScreenState extends State<AiFoodChatScreen> {
     });
   }
 
+  /// 从后端加载全部菜品，注入 GeminiTalk，确保推荐的都是真实存在的菜
+  Future<void> _loadFoodCatalog() async {
+    try {
+      final foods = await ApiService().getAllFoods();
+      debugPrint('🔍 [目录] getAllFoods 返回 ${foods.length} 道菜');
+      if (foods.isNotEmpty) {
+        // 打印前 10 道菜名，确认语言
+        for (int i = 0; i < foods.length && i < 10; i++) {
+          debugPrint('🔍 [目录]   ${foods[i]['foodId']}: ${foods[i]['foodName']} (商家: ${foods[i]['merchantName']})');
+        }
+      }
+      if (foods.isNotEmpty && mounted) {
+        _gemini.setFoodCatalog(foods);
+        debugPrint('✅ [目录] 已注入 GeminiTalk: ${foods.length} 道菜');
+      } else if (foods.isEmpty) {
+        debugPrint('❌ [目录] getAllFoods 返回空数组！后端可能没有菜品数据');
+      }
+    } catch (e) {
+      debugPrint('❌ [目录] 加载失败: $e');
+    }
+  }
+
 // 2. 编写抓取逻辑
   Future<void> _fetchDynamicTrends() async {
-    // 关键修复：确保 context 已经挂载到树上
     await Future.delayed(Duration.zero);
     if (!mounted) return;
 
     setState(() => _isTrendLoading = true);
 
-    // 现在可以安全使用 context 了
     final bool isKorean = Localizations
         .localeOf(context)
         .languageCode == 'ko';
     final String languageName = isKorean ? "韩语(Korean)" : "中文(Chinese)";
     try {
-      final geminiService = GeminiService();
-      final url = Uri.parse(geminiService.getGeminiUrl());
-
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "contents": [{
-            "parts": [{
-              // 2. 在提示词中明确要求语言
-              "text": "请以精简JSON数组格式返回5个当前韩国最火外卖。请使用 $languageName 回复内容。格式：[{\"rank\":1,\"name\":\"名字\",\"reason\":\"一句话原因\",\"search\":\"关键词\"}]"
-            }
-            ]
-          }
-          ]
-        }),
+      final aiText = await AiService().generate(
+        prompt: "请以精简JSON数组格式返回5个当前韩国最火外卖。请使用 $languageName 回复内容。格式：[{\"rank\":1,\"name\":\"名字\",\"reason\":\"一句话原因\",\"search\":\"关键词\"}]",
+        temperature: 0.8,
+        maxTokens: 512,
       );
 
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(response.body);
-        String aiText = jsonResponse['candidates'][0]['content']['parts'][0]['text'];
-        // 去除 Markdown 格式（如果有）
-// 这里的替换是为了去掉 Gemini 返回的 Markdown 代码块标签
-        aiText = aiText.replaceAll('```json', '').replaceAll('```', '').trim();
+      // 去除可能的 Markdown 代码块标签
+      final cleaned = aiText
+          .replaceAll('```json', '')
+          .replaceAll('```', '')
+          .trim();
 
-        final List<dynamic> data = jsonDecode(aiText);
+      final List<dynamic> data = jsonDecode(cleaned);
+      if (mounted) {
         setState(() {
           _trends = data.map((item) => TrendItem.fromJson(item)).toList();
           _isTrendLoading = false;
         });
       }
     } catch (e) {
-      print("动态榜单加载失败: $e");
-      setState(() => _isTrendLoading = false);
+      debugPrint('动态榜单加载失败: $e');
+      if (mounted) setState(() => _isTrendLoading = false);
     }
   }
 
@@ -282,19 +388,40 @@ class _AiFoodChatScreenState extends State<AiFoodChatScreen> {
         .of(context)
         .currentLanguageName;
 
-    // 2. 构造动态的 System Prompt
-    final String dynamicSystemPrompt = '''
-你是一个专业的美食推荐助手，帮助用户找到他们想吃的食物。
-请全程使用 $currentLangName 回复用户。
+    // 2. 代码搜目录，只把匹配结果发给 AI（不喂全量目录）
+    final searchResults = _gemini.searchCatalog(text.trim());
+    final String dynamicSystemPrompt;
 
-通过对话了解用户的：口味偏好、饮食限制、当前心情、预算范围。
-当收集到足够信息时（通常2-3轮后），在回复末尾用以下格式输出推荐：
+    if (searchResults.isNotEmpty) {
+      // 只列出搜到的菜名，不暴露 foodId
+      final names = searchResults.map((f) => f['foodName'].toString()).toList();
+      dynamicSystemPrompt = '''
+你是专业美食推荐助手，全程使用 $currentLangName。
+
+用户需求：「$text」
+数据库匹配到以下 ${searchResults.length} 道菜：
+${jsonEncode(names)}
+
+请从中精选 2-4 道最匹配的推荐给用户。
+当准备推荐时，在回复末尾输出：
 FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
 
-注意：
-- 每次回复必须使用 $currentLangName。
-- 语气要亲切简短，回复不超过80字。
+规则：
+- name 必须照抄上面列表里的原始名称，一字不改。
+- desc 和对话用 $currentLangName，不超过 80 字，语气亲切。
 ''';
+    } else {
+      // 没搜到 → 让 AI 问更多信息
+      dynamicSystemPrompt = '''
+你是专业美食推荐助手，全程使用 $currentLangName。
+
+用户需求：「$text」
+很遗憾，数据库中没搜到匹配的菜品。
+
+请诚实告知用户，并询问更多口味偏好（辣/甜/清淡？中餐/韩餐/日料？）以帮助搜索。
+不要编造菜品，不要输出 FOOD_CARDS。不超过 80 字，语气亲切。
+''';
+    }
 
     _ctrl.clear();
     setState(() {
@@ -473,7 +600,7 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
                     AiTrendListView(
                       trends: _trends,
                       onTrendTap: (name) =>
-                          _send("I want to know more about $name "),
+                          _send("${StrConfig.of(context).askAboutDish} $name"),
                     ),
 
                 const SizedBox(height: 12),
@@ -535,14 +662,23 @@ FOOD_CARDS:[{"emoji":"🍜","name":"菜名","desc":"描述","tag":"标签"}]
   Widget _buildFoodCardItem(FoodCard card) {
     return GestureDetector(
       onTap: () {
-        //这里 监听用户下单
-        // widget.onOrder?.call(card); // 通知外部
-        //_send('我想要 ${card.name}');
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => DetailPage(productId: card.name,)),
-        );
+        // ✅ 使用真实的 foodId
+        if (card.foodId > 0) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => DetailPage(productId: card.foodId.toString())),
+          );
+        } else {
+          // 兜底：AI 没返回有效 foodId 时提示用户
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${card.name} 暂时无法下单，请试试其他推荐'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(10),

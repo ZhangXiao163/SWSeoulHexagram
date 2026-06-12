@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show HttpOverrides, HttpClient, X509Certificate, SecurityContext;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// 后端 API 服务 — 所有和后端的交互统一走这里
@@ -115,6 +116,71 @@ class ApiService {
       'totalPrice': totalPrice,
       'orderStatus': orderStatus,
     });
+  }
+
+  /// 获取所有在售菜品（聚合所有商家的菜单，用于 AI 推荐）
+  /// 返回 [{foodId, foodName, price, merchantId, merchantName}, ...]
+  List<Map<String, dynamic>>? _allFoodsCache;
+
+  Future<List<Map<String, dynamic>>> getAllFoods() async {
+    // 有缓存直接返回
+    if (_allFoodsCache != null && _allFoodsCache!.isNotEmpty) {
+      debugPrint('🔍 [getAllFoods] 命中缓存，${_allFoodsCache!.length} 道菜');
+      return _allFoodsCache!;
+    }
+
+    debugPrint('🔍 [getAllFoods] 开始遍历 4 个分类...');
+    final allFoods = <Map<String, dynamic>>[];
+
+    for (int merchantClass = 0; merchantClass < 4; merchantClass++) {
+      try {
+        final merchants = await getMerchantList(merchantClass);
+        debugPrint('🔍 [getAllFoods] 分类$merchantClass: ${merchants.length} 个商家');
+        if (merchants.isNotEmpty) {
+          debugPrint('🔍 [getAllFoods] 第一个商家原始字段: ${merchants.first.keys.toList()}');
+          debugPrint('🔍 [getAllFoods] 第一个商家数据: ${merchants.first}');
+        }
+
+        for (final m in merchants) {
+          // 兼容多种 ID 字段名
+          final merchantId = (m['id'] as num?)?.toInt() ??
+                             (m['merchantId'] as num?)?.toInt() ?? 0;
+          final merchantName = (m['merchantName'] as String?) ??
+                               (m['name'] as String?) ?? '';
+          if (merchantId == 0) {
+            debugPrint('  ⚠️ 商家 ID 为 0，跳过: $m');
+            continue;
+          }
+
+          try {
+            final foods = await getFoodByMerchantId(merchantId);
+            debugPrint('  📋 商家 $merchantId ($merchantName): ${foods.length} 道菜');
+            for (final f in foods) {
+              allFoods.add({
+                'foodId': (f['foodId'] as num?)?.toInt() ?? 0,
+                'foodName': f['foodName'] as String? ?? '',
+                'price': (f['price'] as num?)?.toDouble() ?? 0.0,
+                'merchantId': merchantId,
+                'merchantName': merchantName,
+              });
+            }
+          } catch (e) {
+            debugPrint('  ❌ 获取商家 $merchantId 菜品失败: $e');
+          }
+        }
+      } catch (e) {
+        debugPrint('❌ [getAllFoods] 分类 $merchantClass 失败: $e');
+      }
+    }
+
+    debugPrint('🔍 [getAllFoods] 完成: 共 ${allFoods.length} 道菜');
+    _allFoodsCache = allFoods;
+    return allFoods;
+  }
+
+  /// 清除菜品缓存（语言切换后可调用）
+  void clearFoodsCache() {
+    _allFoodsCache = null;
   }
 
   /// 查询用户订单列表

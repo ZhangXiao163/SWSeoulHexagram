@@ -101,64 +101,65 @@ class _MenuPageState extends State<MenuPage> {
                             final itemPrice = item['price'] as num? ?? 0;
                             final itemDesc = item['desc'] as String? ?? '';
 
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 18),
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3))],
-                              ),
-                              child: Row(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(15),
-                                    child: SizedBox(
-                                      width: 85, height: 85,
-                                      child: Image.network(
-                                        'https://ai-food-images-seoul.s3.ap-northeast-2.amazonaws.com/food/$foodId.jpg',
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => Container(
-                                          color: const Color(0xfff5f5f5),
-                                          child: const Icon(Icons.restaurant, size: 42, color: Colors.orange),
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => DetailPage(productId: "$foodId")));
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 18),
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3))],
+                                ),
+                                child: Row(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: SizedBox(
+                                        width: 85, height: 85,
+                                        child: Image.network(
+                                          'https://ai-food-images-seoul.s3.ap-northeast-2.amazonaws.com/food/$foodId.jpg',
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Container(
+                                            color: const Color(0xfff5f5f5),
+                                            child: const Icon(Icons.restaurant, size: 42, color: Colors.orange),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(itemName, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Colors.black87)),
-                                        if (itemDesc.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(bottom: 6),
-                                            child: Text(itemDesc, style: TextStyle(fontSize: 12, color: Colors.grey[600]), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                          ),
-                                        Text('₩ ${itemPrice.toStringAsFixed(0)}', style: const TextStyle(color: Colors.orange, fontSize: 18, fontWeight: FontWeight.bold)),
-                                        const SizedBox(height: 10),
-                                        Row(children: [
-                                          _tagWidget(StrConfig.of(context).popular),
-                                          const SizedBox(width: 8),
-                                          _tagWidget(StrConfig.of(context).recommended),
-                                        ]),
-                                      ],
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(itemName, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Colors.black87)),
+                                          if (itemDesc.isNotEmpty)
+                                            Padding(
+                                              padding: const EdgeInsets.only(bottom: 6),
+                                              child: Text(itemDesc, style: TextStyle(fontSize: 12, color: Colors.grey[600]), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                            ),
+                                          Text('₩ ${itemPrice.toStringAsFixed(0)}', style: const TextStyle(color: Colors.orange, fontSize: 18, fontWeight: FontWeight.bold)),
+                                          const SizedBox(height: 10),
+                                          Row(children: [
+                                            _tagWidget(StrConfig.of(context).popular),
+                                            const SizedBox(width: 8),
+                                            _tagWidget(StrConfig.of(context).recommended),
+                                          ]),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  Container(
-                                    width: 45, height: 45,
-                                    decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(15),
-                                      boxShadow: [BoxShadow(color: Colors.orange.shade100, blurRadius: 8)],
+                                    Container(
+                                      width: 45, height: 45,
+                                      decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [BoxShadow(color: Colors.orange.shade100, blurRadius: 8)],
+                                      ),
+                                      child: const Icon(Icons.add, color: Colors.white),
                                     ),
-                                    child: IconButton(
-                                      icon: const Icon(Icons.add, color: Colors.white),
-                                      onPressed: () {
-                                        Navigator.push(context, MaterialPageRoute(builder: (context) => DetailPage(productId: "$foodId")));
-                                      },
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },
