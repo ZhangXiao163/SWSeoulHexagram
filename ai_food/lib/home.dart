@@ -77,7 +77,10 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
     _tryLoadMerchants();
   }
 
-  void _onLocaleChanged() => _loadMerchants(); // 切语言 → 重新拉取
+  void _onLocaleChanged() {
+    ApiService().syncLocale(appLocale.value);
+    _loadMerchants();
+  }
 
   /// 已登录才加载商家，未登录时显示空的引导状态
   Future<void> _tryLoadMerchants() async {

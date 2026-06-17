@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io' show HttpOverrides, HttpClient, X509Certificate, SecurityContext;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:ai_food/ai/secrets.dart';
 
 /// 后端 API 服务 — 所有和后端的交互统一走这里
 class ApiService {
@@ -14,8 +16,26 @@ class ApiService {
     } catch (_) {}
   }
 
-  // 后端地址（用 HTTP 避免自签名证书问题）
-  static const String _baseUrl = 'http://15.165.195.197:8080';
+  // 后端地址（通过 Nginx /api/ 路径代理）
+  static final String _baseUrl = Secrets.apiBaseUrl.isEmpty
+      ? 'http://15.165.195.197/api'
+      : Secrets.apiBaseUrl;
+
+  /// 对外暴露 baseUrl（供 AiService 等模块使用）
+  String get baseUrl => _baseUrl;
+
+  // 当前语言（后端根据此字段返回对应语言的内容）
+  String _lang = 'cn';
+  String get lang => _lang;
+  set lang(String v) {
+    _lang = v;
+    _allFoodsCache = null; // 清除缓存，下次重新获取
+  }
+
+  /// 从 appLocale 同步语言
+  void syncLocale(Locale locale) {
+    lang = locale.languageCode == 'ko' ? 'ko' : 'cn';
+  }
 
   // 登录后保存 token（去掉 LOGIN_TOKEN: 前缀后的 UUID 部分）
   String? _token;
@@ -50,25 +70,25 @@ class ApiService {
 
   /// 获取商家列表
   Future<List<dynamic>> getMerchantList(int merchantClass) async {
-    final res = await _get('/swMerchant/list', {'merchantClass': '$merchantClass'});
+    final res = await _get('/swMerchant/list', {'merchantClass': '$merchantClass', 'lang': _lang});
     return res['data'] as List<dynamic>? ?? [];
   }
 
   /// 按名称搜索商家
   Future<List<dynamic>> searchMerchant(String name) async {
-    final res = await _get('/swMerchant/merchantName', {'merchantName': name});
+    final res = await _get('/swMerchant/merchantName', {'merchantName': name, 'lang': _lang});
     return res['data'] as List<dynamic>? ?? [];
   }
 
   /// 按商家ID查食品
   Future<List<dynamic>> getFoodByMerchantId(int merchantId) async {
-    final res = await _get('/swFood/findFoodByMerchantId/$merchantId', {});
+    final res = await _get('/swFood/findFoodByMerchantId/$merchantId', {'lang': _lang});
     return res['data'] as List<dynamic>? ?? [];
   }
 
   /// 按食品ID查详情
   Future<Map<String, dynamic>> getFoodById(int foodId) async {
-    final res = await _get('/swFood/findFoodByFoodId/$foodId', {});
+    final res = await _get('/swFood/findFoodByFoodId/$foodId', {'lang': _lang});
     return res['data'] as Map<String, dynamic>? ?? {};
   }
 
@@ -134,14 +154,14 @@ class ApiService {
 
     for (int merchantClass = 0; merchantClass < 4; merchantClass++) {
       try {
-        final merchants = await getMerchantList(merchantClass);
-        debugPrint('🔍 [getAllFoods] 分类$merchantClass: ${merchants.length} 个商家');
-        if (merchants.isNotEmpty) {
-          debugPrint('🔍 [getAllFoods] 第一个商家原始字段: ${merchants.first.keys.toList()}');
-          debugPrint('🔍 [getAllFoods] 第一个商家数据: ${merchants.first}');
+        final merchants = await _get('/swMerchant/list', {'merchantClass': '$merchantClass', 'lang': _lang});
+        final merchantList = merchants['data'] as List<dynamic>? ?? [];
+        debugPrint('🔍 [getAllFoods] 分类$merchantClass: ${merchantList.length} 个商家');
+        if (merchantList.isNotEmpty) {
+          debugPrint('🔍 [getAllFoods] 第一个商家原始字段: ${merchantList.first.runtimeType}');
         }
 
-        for (final m in merchants) {
+        for (final m in merchantList) {
           // 兼容多种 ID 字段名
           final merchantId = (m['id'] as num?)?.toInt() ??
                              (m['merchantId'] as num?)?.toInt() ?? 0;
@@ -153,7 +173,8 @@ class ApiService {
           }
 
           try {
-            final foods = await getFoodByMerchantId(merchantId);
+            final foods = await _get('/swFood/findFoodByMerchantId/$merchantId', {'lang': _lang});
+            final foodList = foods['data'] as List<dynamic>? ?? [];
             debugPrint('  📋 商家 $merchantId ($merchantName): ${foods.length} 道菜');
             for (final f in foods) {
               allFoods.add({
@@ -186,6 +207,12 @@ class ApiService {
   /// 查询用户订单列表
   Future<List<dynamic>> findOrdersByUserId(int userId) async {
     final res = await _get('/swOrder/findByUserId/$userId', {});
+    return res['data'] as List<dynamic>? ?? [];
+  }
+
+  /// 查询评价（带语言参数）
+  Future<List<dynamic>> queryCommentsByFoodIdAndMerchantId(int foodId, int merchantId) async {
+    final res = await _get('/swComments/queryCommentsByFoodIdAndMerchantId/$foodId/$merchantId', {'lang': _lang});
     return res['data'] as List<dynamic>? ?? [];
   }
   // ── 通用 GET ──
