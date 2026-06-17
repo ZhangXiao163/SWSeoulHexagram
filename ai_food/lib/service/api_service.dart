@@ -173,10 +173,10 @@ class ApiService {
           }
 
           try {
-            final foods = await _get('/swFood/findFoodByMerchantId/$merchantId', {'lang': _lang});
-            final foodList = foods['data'] as List<dynamic>? ?? [];
-            debugPrint('  📋 商家 $merchantId ($merchantName): ${foods.length} 道菜');
-            for (final f in foods) {
+            final foodResp = await _get('/swFood/findFoodByMerchantId/$merchantId', {'lang': _lang});
+            final foodList = foodResp['data'] as List<dynamic>? ?? [];
+            debugPrint('  📋 商家 $merchantId ($merchantName): ${foodList.length} 道菜');
+            for (final f in foodList) {
               allFoods.add({
                 'foodId': (f['foodId'] as num?)?.toInt() ?? 0,
                 'foodName': f['foodName'] as String? ?? '',

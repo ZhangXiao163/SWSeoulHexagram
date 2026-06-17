@@ -46,3 +46,5 @@ app.*.map.json
 lib/ai/secrets.dart
 lib/secrets.dart
 lib/ai/secrets.dart
+lib/secrets.dart.bak
+lib/ai/secrets.dart
