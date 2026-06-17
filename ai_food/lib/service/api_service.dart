@@ -18,7 +18,7 @@ class ApiService {
 
   // 后端地址（通过 Nginx /api/ 路径代理）
   static final String _baseUrl = Secrets.apiBaseUrl.isEmpty
-      ? 'http://15.165.195.197/api'
+      ? 'http://15.165.195.197:8080'
       : Secrets.apiBaseUrl;
 
   /// 对外暴露 baseUrl（供 AiService 等模块使用）

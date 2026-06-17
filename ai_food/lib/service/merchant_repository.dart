@@ -17,13 +17,14 @@ class MerchantRepository {
         final merchantId = map['merchantId'] ?? map['id'] ?? '';
         final merchantName = map['merchantName'] ?? map['merchant_name'] ?? '未知商家';
         final merchantDesc = map['merchantDesc'] ?? map['merchant_desc'] ?? '';
+        final isKorean = locale.languageCode == 'ko';
         return MerchantModel(
           id: merchantId.toString(),
           name: merchantName.toString(),
           imageUrl: 'https://ai-food-images-seoul.s3.ap-northeast-2.amazonaws.com/merchant/$merchantId.jpg',
           rating: (map['merchantRating'] as num?)?.toDouble() ?? 4.0,
-          deliveryTime: '30分钟',
-          tags: [merchantDesc.toString().isNotEmpty ? merchantDesc.toString() : '月售500+'],
+          deliveryTime: isKorean ? '30분' : '30分钟',
+          tags: [merchantDesc.toString().isNotEmpty ? merchantDesc.toString() : (isKorean ? '월 판매 500+' : '月售500+')],
         );
       }).toList();
     } catch (e) {

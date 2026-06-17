@@ -247,7 +247,9 @@ class _TakeoutHomePageState extends State<TakeoutHomePage> {
                     Text(_errorMsg!, style: const TextStyle(color: Colors.grey)),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: _loadMerchants,
+                      onPressed: () {
+                        _requireLogin(() => _loadMerchants());
+                      },
                       child: Text(StrConfig.of(context).login),
                     ),
                   ],
