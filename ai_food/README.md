@@ -1,31 +1,282 @@
-# ai_food
+# SWSeoulHexagram — AI 음식 주문 시스템 🍽️
+# SWSeoulHexagram — AI 美食外卖系统 🍽️
 
-AI_Food
+> Shinhan University | 산학연계 SW프로젝트 (마이크로스톤)  
+> AI 기반 음식 추천 및 주문 시스템  
+> 新韩大学 | 产学合作 SW 项目 (Microstone)  
+> AI 智能美食推荐与订购系统
 
-## Getting Started 
+---
 
-This project is a starting point for a Flutter application.
+## 👥 팀 구성 / 团队成员
 
-A few resources to get you started if this is your first Flutter project:
+| 학과 | 학년 | 성별 | 학번 | 이름 | 구분 | 연락처 |
+|------|------|------|------|------|------|--------|
+| 소프트웨어공학과 | 3 | 남 | 20242032 | 장효 | 비정규 | 010-5863-7391 |
+| 소프트웨어공학과 | 4 | 남 | 20232002 | 왕추좡 | 비정규 | 010-8058-8126 |
+| 소프트웨어공학과 | 4 | 남 | 20232003 | 정흥일 | 비정규 | 010-6443-3264 |
+| 소프트웨어공학과 | 3 | 남 | 20242031 | 양혁봉 | 비정규 | 010-5726-2165 |
+| 소프트웨어공학과 | 3 | 남 | 20242043 | 김가호 | 비정규 | 010-5962-7559 |
+| 소프트웨어공학과 | 3 | 남 | 20242044 | 이문한 | 비정규 | 010-6443-3264 |
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- **지도교수**: 박진영 | **指导教授**: 박진영
+- **멘토**: 김천웅 | **企业导师**: 김천웅
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
 
-两张表 两个excle  字段对应数据库   
-首先 生成商户表 100个商户 分成四类 即 中餐 韩餐 西餐 以及甜品  商户名 需要中韩两个 字段 商户id为自增主键 商户图片字段 命名为id_商品名.png  例如1_肯德基.png
-然后读取商户表的id（主键）关联 商品表    食品名 需要中韩 两个版本 字段
-食品id 为自增主键  商户id 为上张表的商户id 食品图片 命名为商品id_商品名.png  1_方便面.png
+## 🛠 기술 스택 / 技术栈
 
-生成100个商家 分成4类 每个商家对应一个商家图片  也就是100张图片  命名为id_商品名.png  例如1_肯德基.png
-然后我需要2000张食品图片  命名为商品id_商品名.png  1_方便面.png
+| 계층 / 层级 | 기술 / 技术 |
+|-------------|-------------|
+| **프론트엔드 / 前端** | Flutter 3.11+ (Android / iOS / Web / Windows / macOS / Linux) |
+| **백엔드 / 后端** | Java Spring Boot (ECS 배포: `15.165.195.197:8080`) |
+| **AI 엔진 / AI 引擎** | DeepSeek (백엔드 프록시 호출, API Key는 서버에만 보관) |
+| **다국어 / 多语言** | 중국어(zh) / 한국어(ko), 런타임 전환 가능 |
 
-ui 详情页样式+接口 调通 
-订单待支付+支付完成只完成样式
-所有这些 下周一前完成 
+### 프론트엔드 의존성 / 前端依赖
 
+| 패키지 / 包名 | 용도 / 用途 |
+|---------------|------------|
+| `http` | HTTP 네트워크 요청 / HTTP 网络请求 |
+| `flutter_localizations` + `intl` | 국제화 다국어 지원 / 国际化多语言 |
+| `shimmer` | 스켈레톤 로딩 애니메이션 / 骨架屏加载动画 |
+| `flutter_native_splash` | 네이티브 스플래시 화면 / 原生启动页 |
 
+---
+
+## 🏗 프로젝트 아키텍처 / 项目架构
+
+```
+┌──────────────────────────────────────────────┐
+│                  Flutter App                  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────────┐ │
+│  │  홈 화면   │ │ AI 대화   │ │  장바구니/주문 │ │
+│  │  首页商家  │ │  AI对话   │ │  购物车/订单  │ │
+│  └────┬─────┘ └────┬─────┘ └──────┬───────┘ │
+│       │            │              │          │
+│  ┌────┴────────────┴──────────────┴───────┐  │
+│  │          ApiService (싱글톤)            │  │
+│  │    REST API · Token 관리 · 캐시        │  │
+│  │    REST API · Token 管理 · 缓存层      │  │
+│  └────────────────┬───────────────────────┘  │
+└───────────────────┼──────────────────────────┘
+                    │ HTTP
+┌───────────────────┼──────────────────────────┐
+│            Nginx Reverse Proxy                │
+│         /api/*  →  Spring Boot :8080          │
+│         /ai/*   →  DeepSeek Proxy            │
+└──────────────────────────────────────────────┘
+```
+
+---
+
+## 📱 기능 페이지 / 功能页面
+
+### 1. 스플래시 / Splash — 시작 화면 / 启动页
+- 앱 실행 시 보여지는 전환 화면 / 应用启动过渡画面
+- 로고 표시 / 展示 Logo
+- 담당 / 负责人: 장효
+
+### 2. 메인 페이지 / Main Page — 홈 ⭐ / 首页
+- 검색창 + 가맹점 검색 / 搜索框 + 商家搜索
+- 4대 카테고리: 중식 / 한식 / 양식 / 디저트 (애니메이션 전환) / 4大分类（带动画切换）
+- 배너 캐러셀 (3초 자동 전환) / Banner 轮播图
+- 가맹점 카드 리스트 (Pull-to-refresh + 스켈레톤 로딩) / 商家卡片列表
+- 스티키 헤더: 로그인 + 검색 + AI 버튼 + 언어 전환 / 吸顶导航栏
+- **⭐ AI 추천 진입 버튼 / AI 推荐入口**
+- 담당 / 负责人: 장효
+
+### 3. 메뉴 페이지 / Menu Page — 메뉴 / 菜单
+- 특정 가맹점의 모든 메뉴 표시 (이름 + 가격) / 商家菜品列表
+- 장바구니 담기 버튼 / 加入购物车
+- 상세 페이지로 이동 가능 / 可跳转详情页
+- 담당 / 负责人: 정흥일
+
+### 4. 상품 상세 페이지 / Detail Page — 상세 / 商品详情
+- 음식 이미지, 설명, 가격 / 菜品图片、描述、价格
+- 사용자 리뷰 목록 / 用户评价
+- **⭐ AI 리뷰 요약 기능 / AI 评论总结**
+- 장바구니 담기 / 加入购物车
+- 담당 / 负责人: 김가호
+
+### 5. AI 추천 대화 페이지 / AI Chat — AI 추천 🤖 / AI 推荐
+- 자연어로 취향 입력 / 自然语言输入口味偏好
+- 퀵 태그 (매운맛 / 치킨 / 면요리 / 가성비 / 인기메뉴) / 快捷标签
+- **오늘의 맛집 트렌드 Top 5** (AI 실시간 생성) / 今日美食趋势
+- 멀티턴 대화 내역 / 多轮对话
+- 추천 결과 카드 클릭 → 상세 페이지 및 주문 가능 / 推荐卡片可跳转下单
+- 담당 / 负责人: 장효
+
+### 6. AI 추천 결과 / AI Result — 결과 / 推荐结果
+- AI 대화 페이지 내 포함 / 嵌入 AI 对话页
+- 추천 음식 카드 (매칭도 + 추천 이유 + 태그) / 推荐菜品卡片
+- 장바구니 바로 담기 / 一键加购
+- 담당 / 负责人: 장효
+
+### 7. 장바구니 / Cart — 장바구니 / 购物车
+- 상품 목록 (전체 선택 / 다중 선택) / 商品列表
+- 수량 증감 / 数量增减
+- 총 가격 계산 / 总价计算
+- 주문하기 / 去结算
+- 담당 / 负责人: 왕추좡
+
+### 8. 주문 확인 / Order Confirm — 주문 확인 / 订单确认
+- 상품 정보 확인 / 商品信息确认
+- 배송 주소 / 도착 시간 / 결제 수단 / 配送信息
+- 포장비 / 배송비 / 쿠폰 할인 / 费用明细
+- 주문 제출 / 提交订单
+- 담당 / 负责人: 양혁봉
+
+### 9. 주문 완료 / Order Complete — 주문 완료 / 订单完成
+- 주문 완료 안내 / 订单完成提示
+- 주문 번호 / 订单编号
+- 결제 금액 / 支付金额
+- 홈으로 돌아가기 / 다시 주문하기 / 返回主页/再来一单
+- 담당 / 负责人: 양혁봉
+
+### 10. 데이터 수집 / 数据收集
+- 담당 / 负责人: 이문한
+
+### 11. 백엔드 서비스 / 服务端
+- 백엔드 API 개발 + DB 설계 / 后端 API 开发 + 数据库设计
+- 담당 / 负责人: 왕추좡
+
+---
+
+## 📂 디렉토리 구조 / 项目目录结构
+
+```
+SWSeoulHexagram/
+├── README.md
+├── ai_food/                              # Flutter 프론트엔드 / Flutter 前端
+│   ├── pubspec.yaml                      # 의존성 설정 / 依赖配置
+│   ├── lib/
+│   │   ├── main.dart                     # 진입점 (home.dart 재수출) / 入口
+│   │   ├── home.dart                     # 홈 (가맹점 리스트 + 하단 네비) / 主页
+│   │   ├── splash_page.dart              # 스플래시 / 启动页
+│   │   ├── login.dart                    # 로그인 / 회원가입 / 登录注册
+│   │   ├── menu_page.dart                # 가맹점 메뉴 리스트 / 商家菜单
+│   │   ├── detail_page.dart              # 음식 상세 + AI 리뷰 / 菜品详情
+│   │   ├── AiCartPage.dart               # 장바구니 / 购物车
+│   │   ├── order_confirm_page.dart       # 주문 확인 / 订单确认
+│   │   ├── order_complete.dart           # 주문 완료 / 订单完成
+│   │   ├── payment_page.dart             # 결제 / 支付
+│   │   ├── FoodOrderListScreen.dart      # 내 주문 내역 / 我的订单
+│   │   ├── profile_page.dart             # 마이페이지 / 个人中心
+│   │   ├── MerchantSearchDelegate.dart   # 검색 / 搜索
+│   │   ├── config/
+│   │   │   ├── StrConfig.dart            # 중/한 이중 언어 문자열 / 双语配置
+│   │   │   ├── app_state.dart            # 글로벌 언어 상태 / 全局语言状态
+│   │   │   └── login_manager.dart        # 로그인 상태 관리 / 登录状态管理
+│   │   ├── bean/
+│   │   │   ├── MerchantModel.dart        # 가맹점 모델 / 商家模型
+│   │   │   ├── DishDetailModel.dart      # 음식 상세 모델 / 菜品详情模型
+│   │   │   ├── cart_item.dart            # 장바구니 아이템 모델 / 购物车项模型
+│   │   │   └── OrderModel.dart           # 주문 모델 / 订单模型
+│   │   ├── service/
+│   │   │   ├── api_service.dart          # API 싱글톤 (REST + Token + 캐시) / API 服务
+│   │   │   ├── merchant_repository.dart  # 가맹점 데이터 레포 / 商家数据仓库
+│   │   │   └── order_repository.dart     # 주문 데이터 레포 / 订单数据仓库
+│   │   └── ai/
+│   │       ├── ai_service.dart           # AI 프록시 (→ 백엔드 → DeepSeek) / AI 代理
+│   │       ├── ai_talk.dart              # AI 음식 대화 화면 (핵심) / AI 对话核心
+│   │       ├── TrendItem.dart            # 트렌드 음식 모델 / 趋势菜品模型
+│   │       └── secrets.dart              # API 설정 / API 配置
+│   └── assets/images/                    # 이미지 리소스 / 图片资源
+└── pageDescription.png                   # 페이지 관계도 / 页面关系图
+```
+
+---
+
+## ⭐ 핵심 기술 하이라이트 / 核心技术亮点
+
+### 1. AI 음식 추천 엔진 / AI 美食推荐引擎
+
+```
+사용자 취향 입력 / 用户输入口味偏好
+         ↓
+클라이언트 로컬 검색 (코드 매칭, 전체 데이터 미노출) / 客户端本地搜索
+         ↓
+매칭된 음식 이름만 DeepSeek에 전송 / 只将匹配菜名发给 AI
+         ↓
+AI가 2-4개 최적 메뉴 선정 → FOOD_CARDS JSON 반환 / AI 精选推荐
+         ↓
+클라이언트 정밀 매칭 (정확 → 포함 → 정규화 3단계) / 客户端三级精确匹配
+         ↓
+카드 클릭 → 상세 페이지 + 주문 / 卡片可点击下单
+```
+
+- **API Key 보안 / 密钥安全**: 키는 백엔드에만 보관, 프론트엔드는 `/ai/chat` 및 `/ai/generate` 프록시 호출
+- **경량 Prompt / 轻量提示词**: 전체 메뉴 대신 매칭된 이름만 전송하여 Token 절약
+- **실시간 트렌드 / 实时趋势**: AI 대화 첫 화면에 "오늘의 한국 인기 배달 Top 5" 표시
+
+### 2. 다국어 지원 / 多语言方案
+
+- `ValueNotifier<Locale>` 으로 글로벌 언어 전환 (중국어 ⇄ 한국어)
+- `StrConfig` 에 `zh`/`ko` 듀얼 맵으로 모든 페이지 텍스트 커버 (70+ key)
+- 언어 전환 시 백엔드 `lang` 파라미터 자동 동기화 + 음식 캐시 초기화
+
+### 3. 로그인 가드 / 登录守卫
+
+- 홈 화면 자유 열람, 장바구니/주문/가맹점 상세 진입 시 인증 확인
+- 미로그인 시 로그인 페이지 팝업, 로그인 성공 후 해당 페이지 데이터 자동 갱신
+- Token 관리 + 요청 헤더 자동 `Authorization` 첨부
+
+---
+
+## 🚀 빠른 시작 / 快速开始
+
+### 환경 요구사항 / 环境要求
+- Flutter SDK ≥ 3.11.3
+- Dart SDK ≥ 3.11.3
+- Android Studio / Xcode / VS Code
+
+### 실행 / 运行
+
+```bash
+# Flutter 프로젝트 디렉토리로 이동 / 进入项目
+cd ai_food
+
+# 의존성 설치 / 安装依赖
+flutter pub get
+
+# API 주소 설정 (템플릿 복사 후 수정) / 配置 API 地址
+cp lib/ai/secrets_template.dart lib/ai/secrets.dart
+
+# 실행 (플랫폼 선택) / 运行
+flutter run               # 자동 감지 / 自动检测设备
+flutter run -d chrome      # Web
+```
+
+### 빌드 / 构建
+
+```bash
+# Android APK
+flutter build apk --release
+
+# iOS
+flutter build ios --release
+
+# Web
+flutter build web --release
+```
+
+---
+
+## 📅 개발 일정 / 开发进度
+
+| 단계 / 阶段 | 시기 / 时间 | 내용 / 内容 |
+|------------|------------|-----------|
+| 개발 / 开发 | ~5월 말 / 5月底 | 전체 페이지 UI + API 개발 / 全部页面 UI + 接口 |
+| 연동 테스트 / 联调 | 6월 ~ / 6月起 | 프론트-백엔드 연동 + AI 통합 테스트 / 前后端联调 + AI 集成 |
+
+---
+
+## 📄 License
+
+본 프로젝트는 신한대학교 산학연계 SW프로젝트(마이크로스톤)의 일환입니다.  
+本项目为新韩大学产学合作 SW 项目 (Microstone) 的一部分。
+
+---
+
+![페이지 관계도 / 页面关系图](pageDescription.png)
